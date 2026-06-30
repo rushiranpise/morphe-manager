@@ -316,6 +316,10 @@
     <string name="patcher_failed_subtitle">בדוק את פרטי השגיאה למטה</string>
     <string name="patcher_failed_dialog_title">התיקון נכשל</string>
     <string name="patcher_unknown_error">אירעה שגיאה לא ידועה</string>
+    <string name="patcher_split_step_extracting">חילוץ קבצי APK מפוצלים</string>
+    <string name="patcher_split_step_merging">מיזוג %s</string>
+    <string name="patcher_split_step_writing">כתיבת קובץ APK מאוחד</string>
+    <string name="patcher_split_step_finalizing">סיום מיזוג קובץ APK</string>
     <string name="patcher_conflict_title">התנגשות חבילה</string>
     <string name="patcher_conflict_subtitle">עליך להסיר את ההתקנה של הגרסה הקיימת</string>
     <string name="patcher_conflict_hint">האפליקציה שעברה תיקון משתמשת בתעודה שונה מזו של הגרסה המותקנת. הסרת ההתקנה תמחק את כל נתוני האפליקציה.</string>
@@ -818,6 +822,8 @@ morphe_adaptive_monochrome_custom.xml
     <string name="changelog_description">בדוק את השינויים האחרונים בסוג זה של עדכון</string>
     <string name="changelog_download_fail">שגיאה בהורדת היסטוריית שינויים: %s</string>
     <string name="changelog_empty">אין תיקון זמין זמין</string>
+    <string name="changelog_show_older">הצגת גרסאות ישנות יותר</string>
+    <string name="changelog_older_empty">אין גרסאות ישנות יותר להצגה</string>
     <string name="no_network_toast">אין חיבור אינטרנט זמין</string>
     <string name="update_available">עדכון זמין</string>
     <string name="ready_to_install_update">מוכן להתקנת עדכון</string>

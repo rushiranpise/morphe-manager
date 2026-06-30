@@ -316,6 +316,10 @@ Vnútorná zóna (čiarkovaná): môže byť orezaná maskou spúšťača – uc
     <string name="patcher_failed_subtitle">Skontrolujte detaily chyby nižšie</string>
     <string name="patcher_failed_dialog_title">Oprava zlyhala</string>
     <string name="patcher_unknown_error">Vyskytla sa neznáma chyba</string>
+    <string name="patcher_split_step_extracting">Extrahujem rozdelené APK</string>
+    <string name="patcher_split_step_merging">Zlúčim %s</string>
+    <string name="patcher_split_step_writing">Zapisujem zlúčené APK</string>
+    <string name="patcher_split_step_finalizing">Finalizujem zlúčené APK</string>
     <string name="patcher_conflict_title">Konflikt balíkov</string>
     <string name="patcher_conflict_subtitle">Musíte odinštalovať existujúcu verziu</string>
     <string name="patcher_conflict_hint">Upravená aplikácia používa iný certifikát ako nainštalovaná verzia. Odinštalovaním sa vymažú všetky údaje aplikácie.</string>
@@ -834,6 +838,8 @@ Rozmery obrázka musia byť nasledovné:
     <string name="changelog_description">Pozrite si najnovšie zmeny v tejto aktualizácii</string>
     <string name="changelog_download_fail">Nepodarilo sa stiahnuť zoznam zmien: %s</string>
     <string name="changelog_empty">Zoznam zmien nie je k dispozícii</string>
+    <string name="changelog_show_older">Zobraziť staršie verzie</string>
+    <string name="changelog_older_empty">Nenašli sa žiadne staršie verzie na zobrazenie</string>
     <string name="no_network_toast">Žiadne internetové pripojenie</string>
     <string name="update_available">Je dostupná aktualizácia</string>
     <string name="ready_to_install_update">Inštalácia aktualizácie je pripravená.</string>

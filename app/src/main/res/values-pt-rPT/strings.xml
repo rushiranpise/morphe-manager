@@ -316,6 +316,10 @@ Zona externa (tracejada): pode ser cortada pela máscara do iniciador - mantenha
     <string name="patcher_failed_subtitle">Verifica os detalhes do erro em baixo</string>
     <string name="patcher_failed_dialog_title">Erro ao aplicar modificações</string>
     <string name="patcher_unknown_error">Ocorreu um erro desconhecido</string>
+    <string name="patcher_split_step_extracting">Extraindo APKs divididos</string>
+    <string name="patcher_split_step_merging">Unindo %s</string>
+    <string name="patcher_split_step_writing">Gravando APK unido</string>
+    <string name="patcher_split_step_finalizing">Finalizando APK unido</string>
     <string name="patcher_conflict_title">Conflito de pacote</string>
     <string name="patcher_conflict_subtitle">Precisas de desinstalar a versão já existente</string>
     <string name="patcher_conflict_hint">O aplicativo corrigido usa um certificado diferente da versão instalada. Desinstalar irá apagar todos os dados do aplicativo</string>
@@ -834,6 +838,8 @@ As dimensões das imagens devem ser as seguintes:
     <string name="changelog_description">Confere as últimas alterações nesta atualização</string>
     <string name="changelog_download_fail">Erro ao transferir registo de alterações: %s</string>
     <string name="changelog_empty">Nenhum registo de alterações disponível</string>
+    <string name="changelog_show_older">Mostrar versões anteriores</string>
+    <string name="changelog_older_empty">Não há versões anteriores para mostrar</string>
     <string name="no_network_toast">Ligação à Internet indisponível</string>
     <string name="update_available">Está disponível uma atualização</string>
     <string name="ready_to_install_update">Pronto para instalar a atualização</string>

@@ -316,6 +316,10 @@
     <string name="patcher_failed_subtitle">Проверьте детали ошибки ниже</string>
     <string name="patcher_failed_dialog_title">Установка патча не удалась</string>
     <string name="patcher_unknown_error">Произошла неизвестная ошибка</string>
+    <string name="patcher_split_step_extracting">Извлечение разделенных APK</string>
+    <string name="patcher_split_step_merging">Объединение %s</string>
+    <string name="patcher_split_step_writing">Запись объединенного APK</string>
+    <string name="patcher_split_step_finalizing">Завершение объединения APK</string>
     <string name="patcher_conflict_title">Конфликт пакетов</string>
     <string name="patcher_conflict_subtitle">Вам необходимо удалить существующую версию</string>
     <string name="patcher_conflict_hint">Исправленный файл приложения использует другой сертификат, чем установленная версия. Удаление приведет к удалению всех данных приложения</string>
@@ -834,6 +838,8 @@ morphe_header_custom_dark.png
     <string name="changelog_description">Просмотрите последние изменения в этом обновлении</string>
     <string name="changelog_download_fail">Не удалось загрузить историю изменений: %s</string>
     <string name="changelog_empty">Нет доступных изменений</string>
+    <string name="changelog_show_older">Показать более старые версии</string>
+    <string name="changelog_older_empty">Нет более старых версий для отображения</string>
     <string name="no_network_toast">Нет подключения к Интернету</string>
     <string name="update_available">Доступно обновление</string>
     <string name="ready_to_install_update">Готово к установке обновления</string>

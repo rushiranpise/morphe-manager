@@ -316,6 +316,10 @@ Külső zóna (szaggatott): az indító maszk levághatja – tartsa a fontos r�
     <string name="patcher_failed_subtitle">Ellenőrizd a hiba részleteit alább</string>
     <string name="patcher_failed_dialog_title">A javítás sikertelen</string>
     <string name="patcher_unknown_error">Ismeretlen hiba történt</string>
+    <string name="patcher_split_step_extracting">Osztott APK-k kibontása</string>
+    <string name="patcher_split_step_merging">%s egyesítése</string>
+    <string name="patcher_split_step_writing">Egyesített APK írása</string>
+    <string name="patcher_split_step_finalizing">Egyesített APK véglegesítése</string>
     <string name="patcher_conflict_title">Csomagütközés</string>
     <string name="patcher_conflict_subtitle">El kell távolítanod a meglévő verziót</string>
     <string name="patcher_conflict_hint">A javított alkalmazás más tanúsítványt használ, mint a telepített verzió. A eltávolítás törli az alkalmazás összes adatát.</string>
@@ -835,6 +839,8 @@ Forrás: #%2$s</string>
     <string name="changelog_description">Nézd meg a frissítés legújabb változásait</string>
     <string name="changelog_download_fail">Nem sikerült letölteni a változásnaplót: %s</string>
     <string name="changelog_empty">A változásnapló nem elérhető</string>
+    <string name="changelog_show_older">Régi kiadások megjelenítése</string>
+    <string name="changelog_older_empty">Nincsenek megjeleníthető régi kiadások</string>
     <string name="no_network_toast">Nincs elérhető internetkapcsolat</string>
     <string name="update_available">Egy frissítés érhető el</string>
     <string name="ready_to_install_update">A frissítés telepítésre kész</string>

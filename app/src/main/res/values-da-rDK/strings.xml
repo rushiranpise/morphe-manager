@@ -317,6 +317,9 @@ Ydre zone (stiplet): Kan blive beskåret af launcher-masken – hold vigtige det
     <string name="patcher_failed_dialog_title">Patch mislykkedes</string>
     <string name="patcher_unknown_error">Ukendt fejl opstod</string>
     <string name="patcher_split_step_extracting">Udpakker split-APK\'er</string>
+    <string name="patcher_split_step_merging">Sammenlægning af %s</string>
+    <string name="patcher_split_step_writing">Skrivning af samlet APK</string>
+    <string name="patcher_split_step_finalizing">Finalisering af samlet APK</string>
     <string name="patcher_conflict_title">Pakkekonflikt</string>
     <string name="patcher_conflict_subtitle">Du skal afinstallere den eksisterende version</string>
     <string name="patcher_conflict_hint">Den patched app bruger et andet certifikat end den installerede version. Afinstallation vil slette alle app-data</string>
