@@ -62,6 +62,31 @@ class Filesystem(private val app: Application) {
         return patchedAppsDir.resolve("${safePackage}_${safeVersion}.apk")
     }
 
+    fun getSavedPatchedAppFiles(): List<File> =
+        patchedAppsDir.listFiles { file ->
+            file.isFile && file.extension.equals("apk", ignoreCase = true)
+        }?.toList().orEmpty()
+
+    fun getPatchedAppFiles(packageName: String): List<File> {
+        val safePackage = FilenameUtils.sanitize(packageName)
+        val prefix = "${safePackage}_"
+        return patchedAppsDir.listFiles { file ->
+            file.isFile &&
+                    file.name.startsWith(prefix) &&
+                    file.extension.equals("apk", ignoreCase = true)
+        }?.toList().orEmpty()
+    }
+
+    fun deletePatchedAppFilesExcept(packageNames: Set<String>, keepFile: File): Int {
+        val keepPath = keepFile.absolutePath
+        return packageNames
+            .flatMap(::getPatchedAppFiles)
+            .distinctBy { it.absolutePath }
+            .count { file ->
+                file.absolutePath != keepPath && file.delete()
+            }
+    }
+
     /**
      * Logs all app-private directories and their contents with file sizes.
      * Useful for diagnosing storage issues on startup.

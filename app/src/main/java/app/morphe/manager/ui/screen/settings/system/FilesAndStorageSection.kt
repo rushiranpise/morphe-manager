@@ -44,6 +44,7 @@ fun FilesAndStorageSection(
     val isTV = remember { context.isAndroidTv() }
     val useExpertMode by settingsViewModel.prefs.useExpertMode.getAsState()
     val useCustomFilePicker by settingsViewModel.prefs.useCustomFilePicker.getAsState()
+    val keepPatchedApkHistory by settingsViewModel.prefs.keepPatchedApkHistory.getAsState()
     val enabledState = stringResource(R.string.enabled)
     val disabledState = stringResource(R.string.disabled)
 
@@ -129,6 +130,32 @@ fun FilesAndStorageSection(
                             }
                             MorpheIcon(icon = Icons.Outlined.ChevronRight)
                         }
+                    }
+                )
+
+                MorpheSettingsDivider()
+
+                RichSettingsItem(
+                    onClick = { settingsViewModel.setKeepPatchedApkHistory(!keepPatchedApkHistory) },
+                    title = stringResource(R.string.settings_system_keep_patched_apk_history),
+                    subtitle = stringResource(
+                        if (keepPatchedApkHistory) {
+                            R.string.settings_system_keep_patched_apk_history_description_enabled
+                        } else {
+                            R.string.settings_system_keep_patched_apk_history_description_disabled
+                        }
+                    ),
+                    leadingContent = {
+                        MorpheIcon(icon = Icons.Outlined.History)
+                    },
+                    trailingContent = {
+                        MorpheSwitch(
+                            checked = keepPatchedApkHistory,
+                            onCheckedChange = null,
+                            modifier = Modifier.semantics {
+                                stateDescription = if (keepPatchedApkHistory) enabledState else disabledState
+                            }
+                        )
                     }
                 )
 

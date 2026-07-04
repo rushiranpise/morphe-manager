@@ -93,23 +93,58 @@ class InstalledAppRepository(
      * patched APK at the old version path. Applied patches and selectionPayload are
      * left untouched.
      */
-    suspend fun updateInstalledVersion(app: InstalledApp, newVersion: String) =
+    suspend fun updateInstalledVersion(
+        app: InstalledApp,
+        newVersion: String,
+        deleteOldSavedApk: Boolean = true
+    ) =
         withContext(Dispatchers.IO) {
             if (app.version == newVersion) return@withContext
             dao.upsertApp(app.copy(version = newVersion))
-            val orphans = listOf(
-                filesystem.getPatchedAppFile(app.currentPackageName, app.version),
-                filesystem.getPatchedAppFile(app.originalPackageName, app.version)
-            ).distinctBy { it.absolutePath }
-            orphans.forEach { file ->
-                if (file.exists()) {
-                    runCatching { file.delete() }.onFailure {
-                        Log.w(TAG, "Failed to delete ${file.absolutePath}", it)
+            if (deleteOldSavedApk) {
+                val orphans = listOf(
+                    filesystem.getPatchedAppFile(app.currentPackageName, app.version),
+                    filesystem.getPatchedAppFile(app.originalPackageName, app.version)
+                ).distinctBy { it.absolutePath }
+                orphans.forEach { file ->
+                    if (file.exists()) {
+                        runCatching { file.delete() }.onFailure {
+                            Log.w(TAG, "Failed to delete ${file.absolutePath}", it)
+                        }
                     }
                 }
             }
             Log.i(TAG, "Reconciled version for ${app.currentPackageName}: ${app.version} → $newVersion")
         }
+
+    suspend fun pruneSavedApkHistoryFor(
+        currentPackageName: String,
+        originalPackageName: String,
+        version: String
+    ) = withContext(Dispatchers.IO) {
+        val keepFile = listOf(
+            filesystem.getPatchedAppFile(currentPackageName, version),
+            filesystem.getPatchedAppFile(originalPackageName, version)
+        ).distinctBy { it.absolutePath }.firstOrNull { it.exists() } ?: return@withContext
+
+        val deleted = filesystem.deletePatchedAppFilesExcept(
+            packageNames = setOf(currentPackageName, originalPackageName),
+            keepFile = keepFile
+        )
+        if (deleted > 0) {
+            Log.d(TAG, "Deleted $deleted older patched APK file(s) for $currentPackageName")
+        }
+    }
+
+    suspend fun pruneSavedApkHistory() = withContext(Dispatchers.IO) {
+        dao.getAllSnapshot().forEach { app ->
+            pruneSavedApkHistoryFor(
+                currentPackageName = app.currentPackageName,
+                originalPackageName = app.originalPackageName,
+                version = app.version
+            )
+        }
+    }
 
     /**
      * Delete installed app record and its saved patched APK file from storage.

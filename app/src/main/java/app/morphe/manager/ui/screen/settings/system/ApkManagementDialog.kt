@@ -67,7 +67,7 @@ private data class ApkItemDataWithApp(
     val displayName: String,
     val version: String,
     val fileSize: Long,
-    val installedApp: InstalledApp,
+    val installedApp: InstalledApp?,
     val file: File? = null,
     val installType: InstallType = InstallType.SAVED
 ) {
@@ -106,9 +106,10 @@ private fun PatchedApksContent(
     val patchedApksDeletedText = stringResource(R.string.settings_system_patched_apks_deleted)
     val repository: InstalledAppRepository = koinInject()
     val filesystem: Filesystem = koinInject()
-    val appDataResolver: AppDataResolver = koinInject()
+    val pm: PM = koinInject()
 
     val allInstalledApps by repository.getAll().collectAsStateWithLifecycle(emptyList())
+    var refreshKey by remember { mutableStateOf(0) }
 
     // Track loading state
     var isLoading by remember { mutableStateOf(true) }
@@ -116,39 +117,45 @@ private fun PatchedApksContent(
     // Pre-resolve all app data in a single effect
     val apkItems by produceState(
         initialValue = emptyList(),
-        key1 = allInstalledApps
+        key1 = allInstalledApps,
+        key2 = refreshKey
     ) {
         isLoading = true
         value = withContext(Dispatchers.IO) {
-            allInstalledApps.mapNotNull { app ->
-                // Check if saved APK file exists
-                val savedFile = listOf(
-                    filesystem.getPatchedAppFile(app.currentPackageName, app.version),
-                    filesystem.getPatchedAppFile(app.originalPackageName, app.version)
-                ).distinct().firstOrNull { it.exists() } ?: return@mapNotNull null
+            val installedAppByFile = allInstalledApps
+                .flatMap { app ->
+                    listOf(
+                        filesystem.getPatchedAppFile(app.currentPackageName, app.version),
+                        filesystem.getPatchedAppFile(app.originalPackageName, app.version)
+                    ).distinctBy { it.absolutePath }.map { file -> file.absolutePath to app }
+                }
+                .toMap()
 
-                // Use AppDataResolver to get data
-                val resolvedData = appDataResolver.resolveAppData(
-                    app.currentPackageName,
-                    preferredSource = AppDataSource.PATCHED_APK
-                )
+            filesystem.getSavedPatchedAppFiles()
+                .mapNotNull { savedFile ->
+                    val packageInfo = pm.getPackageInfo(savedFile) ?: return@mapNotNull null
+                    val installedApp = installedAppByFile[savedFile.absolutePath]
 
-                ApkItemDataWithApp(
-                    packageName = app.currentPackageName,
-                    displayName = resolvedData.displayName,
-                    version = app.version,
-                    fileSize = savedFile.length(),
-                    installedApp = app,
-                    file = savedFile,
-                    installType = app.installType
+                    ApkItemDataWithApp(
+                        packageName = packageInfo.packageName,
+                        displayName = pm.run { packageInfo.label() }.ifBlank { packageInfo.packageName },
+                        version = packageInfo.versionName?.takeUnless { it.isBlank() } ?: "unspecified",
+                        fileSize = savedFile.length(),
+                        installedApp = installedApp,
+                        file = savedFile,
+                        installType = installedApp?.installType ?: InstallType.SAVED
+                    )
+                }
+                .sortedWith(
+                    compareByDescending<ApkItemDataWithApp> { it.file?.lastModified() ?: 0L }
+                        .thenBy { it.displayName.lowercase() }
                 )
-            }
         }
         isLoading = false
     }
 
     val totalSize = remember(apkItems) { apkItems.sumOf { it.fileSize } }
-    val itemToDelete = remember { mutableStateOf<InstalledApp?>(null) }
+    val itemToDelete = remember { mutableStateOf<ApkItemDataWithApp?>(null) }
 
     var itemToExport by remember { mutableStateOf<ApkItemData?>(null) }
     val exportLauncher = rememberLauncherForActivityResult(
@@ -226,7 +233,7 @@ private fun PatchedApksContent(
             }
         },
         onDelete = { index ->
-            itemToDelete.value = apkItems[index].installedApp
+            itemToDelete.value = apkItems[index]
         }
     )
 
@@ -235,14 +242,23 @@ private fun PatchedApksContent(
             title = stringResource(R.string.settings_system_patched_apks_delete_title),
             message = stringResource(
                 R.string.settings_system_patched_apks_delete_confirm,
-                itemToDelete.value!!.currentPackageName
+                itemToDelete.value!!.packageName
             ),
             onDismiss = { itemToDelete.value = null },
             onConfirm = {
                 scope.launch {
-                    repository.delete(itemToDelete.value!!)
+                    val target = itemToDelete.value ?: return@launch
+                    val installedApp = target.installedApp
+                    if (installedApp != null) {
+                        repository.delete(installedApp)
+                    } else {
+                        withContext(Dispatchers.IO) {
+                            target.file?.delete()
+                        }
+                    }
                     context.toast(patchedApksDeletedText)
                     itemToDelete.value = null
+                    refreshKey++
                 }
             }
         )
@@ -428,7 +444,10 @@ private fun ApkManagementDialogContent(
                 // Show shimmer while loading
                 isLoading -> items(3) { ShimmerApkItem() }
                 isEmpty -> item { EmptyState(message = emptyMessage) }
-                else -> items(items = items, key = { it.packageName }) { item ->
+                else -> items(
+                    items = items,
+                    key = { it.file?.absolutePath ?: "${it.packageName}:${it.version}" }
+                ) { item ->
                     val index = items.indexOf(item)
                     ApkItemCard(
                         data = item,

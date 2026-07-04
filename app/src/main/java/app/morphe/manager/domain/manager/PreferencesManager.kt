@@ -82,6 +82,7 @@ class PreferencesManager(
     val installerCustomComponents = stringSetPreference("installer_custom_components", emptySet())
     val installerHiddenComponents = stringSetPreference("installer_hidden_components", emptySet())
     val autoInstallWithShizuku = booleanPreference("auto_install_with_shizuku", false)
+    val keepPatchedApkHistory = booleanPreference("keep_patched_apk_history", false)
 
     val useProcessRuntime = booleanPreference(
         "process_runtime", // Old key was 'use_process_runtime' and may have the wrong default for some devices.
@@ -207,7 +208,8 @@ class PreferencesManager(
         val filePickerSortMode: String? = null,
         val useCustomFilePicker: Boolean? = null,
         val customFilePickerUserConfigured: Boolean? = null,
-        val sourceBundleSortMode: String? = null
+        val sourceBundleSortMode: String? = null,
+        val keepPatchedApkHistory: Boolean? = null
     )
 
     suspend fun exportSettings() = SettingsSnapshot(
@@ -245,7 +247,8 @@ class PreferencesManager(
         filePickerSortMode = filePickerSortMode.get(),
         useCustomFilePicker = useCustomFilePicker.get(),
         customFilePickerUserConfigured = customFilePickerUserConfigured.get(),
-        sourceBundleSortMode = sourceBundleSortMode.get()
+        sourceBundleSortMode = sourceBundleSortMode.get(),
+        keepPatchedApkHistory = keepPatchedApkHistory.get()
     )
 
     suspend fun importSettings(snapshot: SettingsSnapshot) = edit {
@@ -284,6 +287,7 @@ class PreferencesManager(
         snapshot.useCustomFilePicker?.let { useCustomFilePicker.value = it }
         snapshot.customFilePickerUserConfigured?.let { customFilePickerUserConfigured.value = it }
         snapshot.sourceBundleSortMode?.let { sourceBundleSortMode.value = it }
+        snapshot.keepPatchedApkHistory?.let { keepPatchedApkHistory.value = it }
     }
 
     companion object {

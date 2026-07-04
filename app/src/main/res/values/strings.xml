@@ -772,6 +772,9 @@ The image dimensions must be as follows:
     <string name="settings_system_patched_apks_delete_title">Delete patched APK?</string>
     <string name="settings_system_patched_apks_delete_confirm">Are you sure you want to delete the saved patched APK for %s?</string>
     <string name="settings_system_patched_apks_deleted">Patched APK deleted successfully</string>
+    <string name="settings_system_keep_patched_apk_history">Keep previous patched APKs</string>
+    <string name="settings_system_keep_patched_apk_history_description_enabled">All patched APK versions stay available for reinstalling</string>
+    <string name="settings_system_keep_patched_apk_history_description_disabled">Only the latest patched APK for each app is kept</string>
 
     <!-- Settings - System Tab - Storage Management - Original APKs Management -->
     <string name="settings_system_original_apks_title">Original APKs</string>

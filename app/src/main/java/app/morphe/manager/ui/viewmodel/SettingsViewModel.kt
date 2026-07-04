@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.morphe.manager.data.platform.Filesystem
 import app.morphe.manager.domain.installer.InstallerManager
 import app.morphe.manager.domain.installer.RootInstaller
 import app.morphe.manager.domain.manager.PreferencesManager
@@ -38,7 +39,8 @@ class SettingsViewModel(
     patchBundleRepository: PatchBundleRepository,
     private val appDataResolver: AppDataResolver,
     originalApkRepository: OriginalApkRepository,
-    installedAppRepository: InstalledAppRepository,
+    private val installedAppRepository: InstalledAppRepository,
+    private val filesystem: Filesystem,
     private val appContext: Context,
 ) : ViewModel() {
     /** True when Google Play Services is available; FCM handles notifications on these devices. */
@@ -144,8 +146,16 @@ class SettingsViewModel(
         .map { it.size }
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
-    val patchedApkCount: StateFlow<Int> = installedAppRepository.getAll()
-        .map { it.size }
+    private val savedPatchedApkRefresh = MutableStateFlow(0)
+
+    val patchedApkCount: StateFlow<Int> = combine(
+        installedAppRepository.getAll(),
+        savedPatchedApkRefresh
+    ) { apps, _ ->
+        withContext(Dispatchers.IO) {
+            filesystem.getSavedPatchedAppFiles().size.coerceAtLeast(apps.size)
+        }
+    }
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     val patchedPackagesCount: StateFlow<Int> =
@@ -218,6 +228,14 @@ class SettingsViewModel(
     fun setUseCustomFilePicker(enabled: Boolean) = viewModelScope.launch {
         prefs.useCustomFilePicker.update(enabled)
         prefs.customFilePickerUserConfigured.update(true)
+    }
+
+    fun setKeepPatchedApkHistory(enabled: Boolean) = viewModelScope.launch(Dispatchers.IO) {
+        prefs.keepPatchedApkHistory.update(enabled)
+        if (!enabled) {
+            installedAppRepository.pruneSavedApkHistory()
+            savedPatchedApkRefresh.value = savedPatchedApkRefresh.value + 1
+        }
     }
 
     /**

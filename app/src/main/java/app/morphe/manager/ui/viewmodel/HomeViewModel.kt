@@ -1121,7 +1121,11 @@ class HomeViewModel(
                 if (app.installType != InstallType.MOUNT && app.installType != InstallType.SAVED) {
                     val liveVersion = pm.getPackageInfo(app.currentPackageName)?.versionName
                     if (!liveVersion.isNullOrBlank() && liveVersion != app.version) {
-                        installedAppRepository.updateInstalledVersion(app, liveVersion)
+                        installedAppRepository.updateInstalledVersion(
+                            app = app,
+                            newVersion = liveVersion,
+                            deleteOldSavedApk = !prefs.keepPatchedApkHistory.get()
+                        )
                     }
                 }
             }
