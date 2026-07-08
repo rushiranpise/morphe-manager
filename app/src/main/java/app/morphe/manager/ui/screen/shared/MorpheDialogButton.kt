@@ -69,14 +69,16 @@ fun MorpheDialogButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: ImageVector? = null,
-    isDestructive: Boolean = false
+    isDestructive: Boolean = false,
+    isLoading: Boolean = false,
+    textSuffix: String? = null
 ) {
     val colors = resolveButtonColors(isDestructive, filled = true)
 
     Button(
         onClick = onClick,
         modifier = modifier.height(52.dp),
-        enabled = enabled,
+        enabled = enabled && !isLoading,
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = colors.containerColor,
@@ -87,7 +89,14 @@ fun MorpheDialogButton(
         border = BorderStroke(1.dp, colors.borderColor),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
     ) {
-        if (icon != null) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                strokeWidth = 2.dp,
+                color = colors.contentColor
+            )
+            Spacer(Modifier.width(8.dp))
+        } else if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
@@ -99,8 +108,21 @@ fun MorpheDialogButton(
             text = text,
             style = MaterialTheme.typography.labelLarge,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            softWrap = false,
+            overflow = if (textSuffix == null) TextOverflow.Ellipsis else TextOverflow.Clip
         )
+        if (textSuffix != null) {
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = textSuffix,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Clip,
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .basicMarquee()
+            )
+        }
     }
 }
 

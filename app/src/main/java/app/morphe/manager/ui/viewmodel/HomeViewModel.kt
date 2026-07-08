@@ -117,6 +117,8 @@ data class InvalidSignatureDialogState(
     val appName: String,
 )
 
+private const val PLAY_STORE_INSTALL_CHECK_ATTEMPTS = 20
+
 /** Quick patch parameters. */
 data class QuickPatchParams(
     val selectedApp: SelectedApp,
@@ -265,6 +267,7 @@ class HomeViewModel(
     // APK selection flow dialogs
     var showApkAvailabilityDialog by mutableStateOf(false)
     var showDownloadInstructionsDialog by mutableStateOf(false)
+    var showPlayStoreInstallInstructionsDialog by mutableStateOf(false)
     var showFilePickerPromptDialog by mutableStateOf(false)
     var showInstalledAppPickerDialog by mutableStateOf(false)
     var loadingInstalledApps by mutableStateOf(false)
@@ -293,8 +296,13 @@ class HomeViewModel(
     var resolvedDownloadUrl by mutableStateOf<String?>(null)
     var pendingSavedApkInfo by mutableStateOf<SavedApkInfo?>(null)
     var pendingInstalledApkInfo by mutableStateOf<InstalledApkInfo?>(null)
+    var pendingPlayStoreInstalledVersion by mutableStateOf<String?>(null)
     // null = not yet loaded, true/false = loaded result
     var pendingTargetAppInstalled by mutableStateOf<Boolean?>(null)
+    var checkingPlayStoreInstall by mutableStateOf(false)
+        private set
+    private var pendingPlayStoreInstallPackage by mutableStateOf<String?>(null)
+    private var playStoreInstallCheckJob: Job? = null
 
     // Bundle update snackbar state
     var showBundleUpdateSnackbar by mutableStateOf(false)
@@ -1492,21 +1500,24 @@ class HomeViewModel(
      * open the APK availability dialog.
      */
     private suspend fun continueApkSelectionFlow(packageName: String) {
-        // Load saved APK (Room + AppDataResolver) and, in expert mode only, installed APK
-        // (PackageManager) in parallel. In simple mode the installed-APK button is hidden,
-        // so we skip the PM lookup entirely to keep simple-mode behavior unchanged
+        // Load saved APK (Room + AppDataResolver) and installed APK state (PackageManager)
+        // in parallel. Simple mode still hides the installed-APK button, but the install
+        // state is used to decide whether Play Store install is a useful option.
         val expertMode = isExpertMode()
         coroutineScope {
             val savedJob = if (pendingSavedApkInfo == null) {
                 async(Dispatchers.IO) { loadSavedApkInfo(packageName) }
             } else null
-            val installedJob = if (expertMode && pendingTargetAppInstalled == null) {
+            val installedJob = if (pendingTargetAppInstalled == null) {
                 async(Dispatchers.IO) { loadInstalledInfo(packageName) }
             } else null
             savedJob?.await()?.let { pendingSavedApkInfo = it }
             installedJob?.await()?.let { (installed, info) ->
                 pendingTargetAppInstalled = installed
-                pendingInstalledApkInfo = info?.takeIf { isInstalledVersionCompatible(it.version, it.versionCode) }
+                pendingPlayStoreInstalledVersion = info?.version
+                if (expertMode) {
+                    pendingInstalledApkInfo = info?.takeIf { isInstalledVersionCompatible(it.version, it.versionCode) }
+                }
             }
         }
 
@@ -1688,6 +1699,70 @@ class HomeViewModel(
                 }
             } finally {
                 processingApkSelection = false
+            }
+        }
+    }
+
+    /**
+     * Opens the Play Store for the current patch target and keeps the APK selection state alive.
+     * When Morphe resumes, [resumePendingPlayStoreInstall] makes the installed-APK action available.
+     */
+    fun handleInstallFromPlayStore(openStore: (String) -> Boolean) {
+        val packageName = pendingPackageName ?: return
+        pendingPlayStoreInstallPackage = packageName
+        checkingPlayStoreInstall = true
+        showPlayStoreInstallInstructionsDialog = false
+
+        if (!openStore(packageName)) {
+            pendingPlayStoreInstallPackage = null
+            checkingPlayStoreInstall = false
+            showPlayStoreInstallInstructionsDialog = true
+            app.toast(app.getString(R.string.sources_management_failed_to_open_url))
+        }
+    }
+
+    /**
+     * Called after returning from Play Store. If the target package is installed, restore
+     * the APK choice dialog with the existing "Use installed APK" action available.
+     */
+    fun resumePendingPlayStoreInstall() {
+        val packageName = pendingPlayStoreInstallPackage ?: return
+        if (processingApkSelection) return
+        if (playStoreInstallCheckJob?.isActive == true) return
+
+        playStoreInstallCheckJob = viewModelScope.launch {
+            showPlayStoreInstallInstructionsDialog = true
+            checkingPlayStoreInstall = true
+            var installed = false
+            var info: InstalledApkInfo? = null
+
+            try {
+                var attempt = 0
+                while (attempt < PLAY_STORE_INSTALL_CHECK_ATTEMPTS && info == null) {
+                    delay(if (attempt == 0) 500.milliseconds else 1.seconds)
+                    if (pendingPlayStoreInstallPackage != packageName) return@launch
+                    val result = withContext(Dispatchers.IO) { loadInstalledInfo(packageName) }
+                    installed = result.first
+                    info = result.second
+                    attempt++
+                }
+
+                pendingTargetAppInstalled = installed
+                pendingInstalledApkInfo = info
+                pendingPlayStoreInstalledVersion = info?.version
+                pendingPlayStoreInstallPackage = null
+                checkingPlayStoreInstall = false
+
+                if (info == null && pendingPackageName == packageName && pendingAppName != null) {
+                    app.toast(app.getString(R.string.home_apk_play_store_install_not_found))
+                } else if (pendingPackageName != packageName || pendingAppName == null) {
+                    cleanupPendingData()
+                }
+            } finally {
+                if (pendingPlayStoreInstallPackage == packageName) {
+                    checkingPlayStoreInstall = false
+                }
+                playStoreInstallCheckJob = null
             }
         }
     }
@@ -2403,7 +2478,11 @@ class HomeViewModel(
         pendingSelectedBundleUid = null
         resolvedDownloadUrl = null
         showDownloadInstructionsDialog = false
+        showPlayStoreInstallInstructionsDialog = false
         showFilePickerPromptDialog = false
+        checkingPlayStoreInstall = false
+        playStoreInstallCheckJob?.cancel()
+        playStoreInstallCheckJob = null
     }
 
     /**
@@ -2652,7 +2731,12 @@ class HomeViewModel(
         resolvedDownloadUrl = null
         pendingSavedApkInfo = null
         pendingInstalledApkInfo = null
+        pendingPlayStoreInstalledVersion = null
         pendingTargetAppInstalled = null
+        checkingPlayStoreInstall = false
+        pendingPlayStoreInstallPackage = null
+        playStoreInstallCheckJob?.cancel()
+        playStoreInstallCheckJob = null
         if (!keepSelectedApp) {
             pendingSelectedApp?.let { app ->
                 if (app is SelectedApp.Local && app.temporary) {
@@ -2663,6 +2747,7 @@ class HomeViewModel(
         }
         showApkAvailabilityDialog = false
         showDownloadInstructionsDialog = false
+        showPlayStoreInstallInstructionsDialog = false
         showFilePickerPromptDialog = false
         showInstalledAppPickerDialog = false
     }

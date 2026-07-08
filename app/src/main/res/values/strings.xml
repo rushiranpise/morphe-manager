@@ -138,12 +138,24 @@
     <string name="home_apk_availability_incompatible_label">Incompatible</string>
     <string name="home_apk_availability_yes">Yes, help me find an APK</string>
     <string name="home_apk_availability_no">No, I already have an APK</string>
+    <string name="home_apk_install_from_play_store">Install from Play Store</string>
+    <string name="home_apk_install_or_update_from_play_store">Update from Play Store</string>
+    <string name="home_apk_play_store_install_not_found">App was not installed. Retry Play Store or cancel</string>
     <string name="home_apk_use_saved">Use saved APK</string>
     <string name="home_apk_use_installed">Use installed APK</string>
     <string name="home_app_info_no_saved_apk">No saved APK. Patching will require selecting the APK file again</string>
     <string name="home_version_requires_android">Requires Android %s+</string>
     <string name="home_apk_no_compatible_versions_title">Not supported on this device</string>
     <string name="home_apk_no_compatible_versions_message">&lt;b&gt;%1$s&lt;/b&gt; has no supported versions for Android %2$d (API %3$d). All declared versions require a higher Android version</string>
+
+    <!-- Home Screen - Dialog 1.5: Play Store Install Instructions -->
+    <string name="home_play_store_install_continue">Continue to Play Store</string>
+    <string name="home_play_store_install_checking">Checking installed app</string>
+    <string name="home_play_store_install_step1">This will open the Play Store listing for %s</string>
+    <string name="home_play_store_install_step2">Install the original app from Play Store</string>
+    <string name="home_play_store_install_step3">Return to Morphe after the install finishes</string>
+    <string name="home_play_store_install_step4">Morphe will check for the installed app here. When it appears, tap Use installed APK to continue</string>
+    <string name="home_play_store_install_version_note">Play Store availability depends on your device and region. If available, it installs the latest app version, which may differ from the version recommended for this patch</string>
 
     <!-- Home Screen - Dialog 2: Download Instructions -->
     <string name="home_download_instructions_title">Download the original APK</string>

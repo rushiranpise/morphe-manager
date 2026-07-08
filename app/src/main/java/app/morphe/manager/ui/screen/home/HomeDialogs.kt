@@ -5,6 +5,9 @@
 
 package app.morphe.manager.ui.screen.home
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -44,7 +47,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.morphe.manager.R
 import app.morphe.manager.domain.bundles.RemotePatchBundle
 import app.morphe.manager.domain.repository.PatchBundleRepository
@@ -74,6 +80,17 @@ fun HomeDialogs(
     val uriHandler = LocalUriHandler.current
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner, homeViewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                homeViewModel.resumePendingPlayStoreInstall()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     // APK selection processing overlay - blocks interaction while APK is loaded/validated in background
     MorpheOverlay(visible = homeViewModel.processingApkSelection) {
@@ -86,7 +103,13 @@ fun HomeDialogs(
                 homeViewModel.pendingPackageName != null &&
                 homeViewModel.pendingAppName != null,
         enter = MorpheAnimations.fadeIn,
-        exit = MorpheAnimations.fadeOut(if (homeViewModel.showDownloadInstructionsDialog) 0 else MorpheDefaults.ANIMATION_DURATION)
+        exit = MorpheAnimations.fadeOut(
+            if (homeViewModel.showDownloadInstructionsDialog || homeViewModel.showPlayStoreInstallInstructionsDialog) {
+                0
+            } else {
+                MorpheDefaults.ANIMATION_DURATION
+            }
+        )
     ) {
         val appName = homeViewModel.pendingAppName ?: return@AnimatedVisibility
         val recommendedVersion = homeViewModel.pendingRecommendedVersion
@@ -97,6 +120,7 @@ fun HomeDialogs(
         val isExpertMode = homeViewModel.prefs.useExpertMode.getBlocking()
         val savedApkInfo = homeViewModel.pendingSavedApkInfo
         val installedApkInfo = homeViewModel.pendingInstalledApkInfo
+        val playStoreInstalledVersion = homeViewModel.pendingPlayStoreInstalledVersion
         val targetAppInstalled = homeViewModel.pendingTargetAppInstalled == true
 
         ApkAvailabilityDialog(
@@ -111,6 +135,7 @@ fun HomeDialogs(
             isExpertMode = isExpertMode,
             savedApkInfo = savedApkInfo,
             installedApkInfo = installedApkInfo,
+            playStoreInstalledVersion = playStoreInstalledVersion,
             onDismiss = {
                 homeViewModel.showApkAvailabilityDialog = false
                 homeViewModel.cleanupPendingData()
@@ -132,6 +157,42 @@ fun HomeDialogs(
             },
             onUseInstalled = {
                 homeViewModel.handleInstalledApkSelection()
+            },
+            onInstallFromPlayStore = {
+                homeViewModel.showApkAvailabilityDialog = false
+                scope.launch {
+                    delay(50.milliseconds)
+                    homeViewModel.showPlayStoreInstallInstructionsDialog = true
+                }
+            }
+        )
+    }
+
+    // Dialog 1.5: Play Store install instructions
+    AnimatedVisibility(
+        visible = homeViewModel.showPlayStoreInstallInstructionsDialog &&
+                homeViewModel.pendingPackageName != null &&
+                homeViewModel.pendingAppName != null,
+        enter = MorpheAnimations.overlayEnter,
+        exit = MorpheAnimations.overlayExit
+    ) {
+        val appName = homeViewModel.pendingAppName ?: return@AnimatedVisibility
+
+        PlayStoreInstallInstructionsDialog(
+            appName = appName,
+            installedApkInfo = homeViewModel.pendingInstalledApkInfo,
+            checkingInstall = homeViewModel.checkingPlayStoreInstall,
+            onDismiss = {
+                homeViewModel.showPlayStoreInstallInstructionsDialog = false
+                homeViewModel.cleanupPendingData()
+            },
+            onUseInstalled = {
+                homeViewModel.handleInstalledApkSelection()
+            },
+            onContinue = {
+                homeViewModel.handleInstallFromPlayStore { packageName ->
+                    openPlayStorePage(context, packageName)
+                }
             }
         )
     }
@@ -598,11 +659,13 @@ private fun ApkAvailabilityDialog(
     isExpertMode: Boolean,
     savedApkInfo: SavedApkInfo?,
     installedApkInfo: InstalledApkInfo?,
+    playStoreInstalledVersion: String?,
     onDismiss: () -> Unit,
     onHaveApk: () -> Unit,
     onNeedApk: () -> Unit,
     onUseSaved: () -> Unit,
-    onUseInstalled: () -> Unit
+    onUseInstalled: () -> Unit,
+    onInstallFromPlayStore: () -> Unit
 ) {
     val deviceSdk = Build.VERSION.SDK_INT
 
@@ -626,15 +689,38 @@ private fun ApkAvailabilityDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Main action buttons
-                MorpheDialogButtonRow(
-                    primaryText = stringResource(R.string.home_apk_availability_yes),
-                    onPrimaryClick = onNeedApk,
-                    primaryIcon = Icons.Outlined.Download,
-                    secondaryText = stringResource(R.string.home_apk_availability_no),
-                    onSecondaryClick = onHaveApk,
-                    secondaryIcon = Icons.Outlined.Check,
-                    layout = DialogButtonLayout.Vertical
-                )
+                val shouldShowPlayStoreAction = !targetAppInstalled ||
+                    installedApkInfo == null ||
+                    recommendedVersion?.version?.let { it != playStoreInstalledVersion } == true
+
+                MorpheDialogButtonColumn {
+                    MorpheDialogButton(
+                        text = stringResource(R.string.home_apk_availability_yes),
+                        onClick = onNeedApk,
+                        icon = Icons.Outlined.Download,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    MorpheDialogOutlinedButton(
+                        text = stringResource(R.string.home_apk_availability_no),
+                        onClick = onHaveApk,
+                        icon = Icons.Outlined.FolderOpen,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (shouldShowPlayStoreAction) {
+                        MorpheDialogButton(
+                            text = stringResource(
+                                if (targetAppInstalled) {
+                                    R.string.home_apk_install_or_update_from_play_store
+                                } else {
+                                    R.string.home_apk_install_from_play_store
+                                }
+                            ),
+                            onClick = onInstallFromPlayStore,
+                            icon = Icons.Outlined.Shop,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
 
                 // When saved and installed APKs share the same version, prefer the saved copy.
                 // Hide the installed button in that case to avoid showing two equivalent sources
@@ -747,6 +833,114 @@ private fun ApkAvailabilityDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+        }
+    }
+}
+
+/**
+ * Dialog 1.5: Play Store install instructions.
+ */
+@Composable
+private fun PlayStoreInstallInstructionsDialog(
+    appName: String,
+    installedApkInfo: InstalledApkInfo?,
+    checkingInstall: Boolean,
+    onDismiss: () -> Unit,
+    onUseInstalled: () -> Unit,
+    onContinue: () -> Unit
+) {
+    MorpheDialog(
+        onDismissRequest = onDismiss,
+        title = stringResource(R.string.home_apk_install_from_play_store),
+        footer = {
+            MorpheDialogButtonColumn {
+                when {
+                    installedApkInfo != null -> {
+                        MorpheDialogButton(
+                            text = stringResource(R.string.home_apk_use_installed),
+                            textSuffix = buildVersionSuffix(installedApkInfo.version, installedApkInfo.versionCode),
+                            onClick = onUseInstalled,
+                            icon = Icons.Outlined.PhoneAndroid,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    checkingInstall -> {
+                        MorpheDialogButton(
+                            text = stringResource(R.string.home_play_store_install_checking),
+                            onClick = {},
+                            isLoading = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    else -> {
+                        MorpheDialogButton(
+                            text = stringResource(R.string.home_play_store_install_continue),
+                            onClick = onContinue,
+                            icon = Icons.AutoMirrored.Outlined.OpenInNew,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                MorpheDialogOutlinedButton(
+                    text = stringResource(android.R.string.cancel),
+                    onClick = onDismiss,
+                    icon = Icons.Outlined.Close,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    ) {
+        val textColor = LocalDialogTextColor.current
+        val secondaryColor = LocalDialogSecondaryTextColor.current
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            InfoBadge(
+                text = stringResource(R.string.home_play_store_install_version_note),
+                style = InfoBadgeStyle.Error,
+                icon = Icons.Outlined.Warning,
+                isExpanded = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = stringResource(R.string.home_download_instructions_steps_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
+
+            InstructionStep(
+                number = "1",
+                text = stringResource(R.string.home_play_store_install_step1, appName),
+                textColor = textColor,
+                secondaryColor = secondaryColor
+            )
+
+            InstructionStep(
+                number = "2",
+                text = stringResource(R.string.home_play_store_install_step2),
+                textColor = textColor,
+                secondaryColor = secondaryColor
+            )
+
+            InstructionStep(
+                number = "3",
+                text = stringResource(R.string.home_play_store_install_step3),
+                textColor = textColor,
+                secondaryColor = secondaryColor
+            )
+
+            InstructionStep(
+                number = "4",
+                text = stringResource(R.string.home_play_store_install_step4),
+                textColor = textColor,
+                secondaryColor = secondaryColor
+            )
         }
     }
 }
@@ -993,6 +1187,33 @@ private fun FilePickerPromptDialog(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
+    }
+}
+
+private fun openPlayStorePage(context: Context, packageName: String): Boolean {
+    val encodedPackage = Uri.encode(packageName)
+    val marketIntent = Intent(
+        Intent.ACTION_VIEW,
+        Uri.parse("market://details?id=$encodedPackage")
+    ).apply {
+        setPackage(PLAY_STORE_INSTALLER_PACKAGE)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    val webIntent = Intent(
+        Intent.ACTION_VIEW,
+        Uri.parse("https://play.google.com/store/apps/details?id=$encodedPackage")
+    ).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    return runCatching {
+        context.startActivity(marketIntent)
+        true
+    }.getOrElse {
+        runCatching {
+            context.startActivity(webIntent)
+            true
+        }.getOrDefault(false)
     }
 }
 
