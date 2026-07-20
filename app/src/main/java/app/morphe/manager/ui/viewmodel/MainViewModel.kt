@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import app.morphe.manager.domain.manager.PreferencesManager
+import app.morphe.manager.util.AutomationIntents
 
 class MainViewModel(
     val prefs: PreferencesManager
@@ -39,6 +40,12 @@ class MainViewModel(
      * [app.morphe.manager.ui.viewmodel.HomeViewModel.handleExternalApkUri], then resets to null.
      */
     var pendingExternalApkUri: Uri? by mutableStateOf(null)
+
+    /**
+     * Set by [app.morphe.manager.MainActivity.handleDeepLinkIntent] when an automation app
+     * asks Morphe to open the patch flow for a package.
+     */
+    var pendingAutomationPatchRequest: AutomationIntents.PatchRequest? by mutableStateOf(null)
 
     data class DeepLinkSource(val url: String, val name: String?)
 }

@@ -63,6 +63,7 @@ fun ExpertModeDialog(
     patchActions: ExpertPatchActions,
     savedPatches: PatchSelection = emptyMap(),
     onDismiss: () -> Unit,
+    onSaveProfile: (() -> Unit)? = null,
     onProceed: () -> Unit
 ) {
     val selectedPatchForOptions = remember { mutableStateOf<Pair<Int, PatchInfo>?>(null) }
@@ -149,6 +150,23 @@ fun ExpertModeDialog(
                         contentDescription = stringResource(R.string.expert_mode_search),
                         modifier = Modifier.size(18.dp)
                     )
+                }
+
+                if (onSaveProfile != null) {
+                    FilledTonalIconButton(
+                        onClick = onSaveProfile,
+                        modifier = Modifier.size(36.dp),
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.BookmarkAdd,
+                            contentDescription = stringResource(R.string.automation_profiles_save),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         },

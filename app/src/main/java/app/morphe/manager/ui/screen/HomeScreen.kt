@@ -54,6 +54,7 @@ fun HomeScreen(
     onboardingState: OnboardingState? = null,
     globalOnboardingState: GlobalOnboardingState? = null,
     patchTriggerPackage: String? = null,
+    automationPatchRequest: AutomationIntents.PatchRequest? = null,
     onPatchTriggerHandled: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -91,7 +92,8 @@ fun HomeScreen(
     }
 
     // Collect state flows
-    val availablePatches by homeViewModel.availablePatches.collectAsStateWithLifecycle(0)
+    val availablePatchesState by homeViewModel.availablePatches.collectAsStateWithLifecycle(-1)
+    val availablePatches = availablePatchesState.coerceAtLeast(0)
     // Atomic home state - null means pipeline is still initializing (shimmer)
     val homeAppState by homeViewModel.homeAppState.collectAsStateWithLifecycle()
     val homeAppItems = homeAppState?.visible ?: emptyList()
@@ -147,12 +149,18 @@ fun HomeScreen(
         contract = RequestInstallAppsContract
     ) { homeViewModel.showAndroid11Dialog = false }
 
-    // Handle patch trigger from dialog
-    LaunchedEffect(patchTriggerPackage) {
-        patchTriggerPackage?.let { packageName ->
-            homeViewModel.showPatchDialog(packageName)
-            onPatchTriggerHandled()
+    // Handle patch triggers from dialogs and automation intents after source state initializes.
+    LaunchedEffect(patchTriggerPackage, automationPatchRequest, bundlePipelineLoading, availablePatchesState) {
+        val packageName = patchTriggerPackage ?: return@LaunchedEffect
+        if (bundlePipelineLoading) return@LaunchedEffect
+        if (availablePatchesState < 0) return@LaunchedEffect
+
+        if (availablePatchesState <= 0) {
+            context.toast(context.getString(R.string.home_no_patches_available))
+        } else {
+            homeViewModel.showPatchDialog(packageName, automationPatchRequest)
         }
+        onPatchTriggerHandled()
     }
 
     // Check for manager update

@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import app.morphe.manager.R
+import app.morphe.manager.ui.screen.settings.advanced.ExternalAutomationSettingsItem
 import app.morphe.manager.ui.screen.settings.advanced.GitHubPatSettingsItem
 import app.morphe.manager.ui.screen.settings.advanced.PatchOptionsSection
 import app.morphe.manager.ui.screen.settings.advanced.PatcherTuningSection
@@ -48,7 +49,8 @@ fun AdvancedTabContent(
     onExpertModeItemPositioned: ((Rect) -> Unit)? = null,
     onExpertModeScrollTarget: ((Int) -> Unit)? = null,
     onProcessRuntimePositioned: ((Rect) -> Unit)? = null,
-    onProcessRuntimeScrollTarget: ((Int) -> Unit)? = null
+    onProcessRuntimeScrollTarget: ((Int) -> Unit)? = null,
+    onOpenExternalAutomation: () -> Unit = {}
 ) {
     val prefs = settingsViewModel.prefs
     val useExpertMode by prefs.useExpertMode.getAsState()
@@ -182,6 +184,11 @@ fun AdvancedTabContent(
                                     }
                                 )
                             }
+                        )
+
+                        ExternalAutomationSettingsItem(
+                            settingsViewModel = settingsViewModel,
+                            onOpen = onOpenExternalAutomation
                         )
                     }
 

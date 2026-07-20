@@ -146,6 +146,25 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        AutomationIntents.profileId(intent)?.let { profileId ->
+            val profile = AutomationProfiles
+                .decode(vm.prefs.automationProfiles.getBlocking())
+                .firstOrNull { it.id == profileId }
+
+            if (profile == null) {
+                toast(getString(R.string.automation_profiles_missing))
+                return
+            }
+
+            handleAutomationPatchRequest(profile.toRequest(), vm)
+            return
+        }
+
+        AutomationIntents.patchRequest(intent)?.let { request ->
+            handleAutomationPatchRequest(request, vm)
+            return
+        }
+
         val data = intent?.data ?: return
 
         // Handle .mpp file open from file manager
@@ -177,6 +196,18 @@ class MainActivity : AppCompatActivity() {
             vm.pendingDeepLinkSource = MainViewModel.DeepLinkSource(url = url, name = name)
             return
         }
+    }
+
+    private fun handleAutomationPatchRequest(
+        request: AutomationIntents.PatchRequest,
+        vm: MainViewModel
+    ) {
+        AutomationRequestGate.blockedReason(vm.prefs, request)?.let { reason ->
+            toast(AutomationRequestGate.blockedMessage(this, reason))
+            return
+        }
+
+        vm.pendingAutomationPatchRequest = request
     }
 }
 
@@ -232,6 +263,13 @@ private fun MorpheManager(vm: MainViewModel) {
             navController.popBackStack(HomeScreen, false)
             vm.pendingExternalApkUri = null
             homeViewModel.handleExternalApkUri(uri)
+        }
+    }
+
+    // Handle automation intents from Tasker, MacroDroid, Automate, and similar apps.
+    LaunchedEffect(vm.pendingAutomationPatchRequest) {
+        if (vm.pendingAutomationPatchRequest != null) {
+            navController.popBackStack(HomeScreen, false)
         }
     }
 
@@ -391,6 +429,9 @@ private fun MorpheManager(vm: MainViewModel) {
                     }
                 }
 
+                val automationPatchRequest = vm.pendingAutomationPatchRequest
+                val externalPatchTriggerPackage = automationPatchRequest?.packageName ?: patchTriggerPackage
+
                 HomeScreen(
                     onSettingsClick = { navController.navigate(Settings) },
                     onboardingState = if (showOnboarding && onboardingPhase == OnboardingPhase.HOME) homeOnboardingState else null,
@@ -410,9 +451,11 @@ private fun MorpheManager(vm: MainViewModel) {
                     homeViewModel = homeViewModel,
                     usingMountInstallState = usingMountInstallState,
                     bundleUpdateProgress = bundleUpdateProgress,
-                    patchTriggerPackage = patchTriggerPackage,
+                    patchTriggerPackage = externalPatchTriggerPackage,
+                    automationPatchRequest = automationPatchRequest,
                     onPatchTriggerHandled = {
                         entry.savedStateHandle["patch_trigger_package"] = null
+                        vm.pendingAutomationPatchRequest = null
                     }
                 )
             }
@@ -449,6 +492,9 @@ private fun MorpheManager(vm: MainViewModel) {
                 SettingsScreen(
                     homeViewModel = homeViewModel,
                     globalOnboardingState = if (showOnboarding) globalOnboardingState else null,
+                    onRunAutomationProfile = { request ->
+                        vm.pendingAutomationPatchRequest = request
+                    },
                     onStartTour = if (!showOnboarding) {
                         {
                             onboardingPhase = OnboardingPhase.HOME

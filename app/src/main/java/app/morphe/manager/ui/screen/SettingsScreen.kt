@@ -46,6 +46,7 @@ import app.morphe.manager.ui.screen.home.GlobalOnboardingState
 import app.morphe.manager.ui.screen.settings.AdvancedTabContent
 import app.morphe.manager.ui.screen.settings.AppearanceTabContent
 import app.morphe.manager.ui.screen.settings.SystemTabContent
+import app.morphe.manager.ui.screen.settings.advanced.ExternalAutomationScreen
 import app.morphe.manager.ui.screen.settings.system.*
 import app.morphe.manager.ui.screen.shared.GlassButton
 import app.morphe.manager.ui.screen.shared.GlassButtonDefaults
@@ -83,7 +84,8 @@ fun SettingsScreen(
         parametersOf(false)
     },
     globalOnboardingState: GlobalOnboardingState? = null,
-    onStartTour: (() -> Unit)? = null
+    onStartTour: (() -> Unit)? = null,
+    onRunAutomationProfile: (AutomationIntents.PatchRequest) -> Unit = {}
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -105,6 +107,7 @@ fun SettingsScreen(
     var filePickerScrollTarget by remember { mutableIntStateOf(0) }
 
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(SettingsTab.ADVANCED.ordinal) }
+    var showExternalAutomationScreen by rememberSaveable { mutableStateOf(false) }
 
     // Register scroll/navigate callbacks so MorpheManager can drive Settings pager during onboarding
     LaunchedEffect(globalOnboardingState) {
@@ -285,7 +288,8 @@ fun SettingsScreen(
                 onExpertModeItemPositioned = { globalOnboardingState?.expertModeBounds = it },
                 onExpertModeScrollTarget = { expertModeScrollTarget = it },
                 onProcessRuntimePositioned = { globalOnboardingState?.processRuntimeBounds = it },
-                onProcessRuntimeScrollTarget = { processRuntimeScrollTarget = it }
+                onProcessRuntimeScrollTarget = { processRuntimeScrollTarget = it },
+                onOpenExternalAutomation = { showExternalAutomationScreen = true }
             )
             SettingsTab.SYSTEM -> SystemTabContent(
                 settingsViewModel = settingsViewModel,
@@ -321,7 +325,16 @@ fun SettingsScreen(
     val backLabel = stringResource(R.string.back)
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (landscape) {
+        if (showExternalAutomationScreen) {
+            ExternalAutomationScreen(
+                settingsViewModel = settingsViewModel,
+                onBack = { showExternalAutomationScreen = false },
+                onRunAutomationProfile = { request ->
+                    showExternalAutomationScreen = false
+                    onRunAutomationProfile(request)
+                }
+            )
+        } else if (landscape) {
             // Landscape: sidebar navigation + content panel
             Row(
                 modifier = Modifier

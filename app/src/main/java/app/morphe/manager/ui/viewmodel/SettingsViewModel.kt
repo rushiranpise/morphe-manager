@@ -2,7 +2,12 @@ package app.morphe.manager.ui.viewmodel
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
+import android.graphics.drawable.Icon
+import android.net.Uri
 import android.os.Build
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.morphe.manager.MainActivity
+import app.morphe.manager.R
 import app.morphe.manager.domain.installer.InstallerManager
 import app.morphe.manager.domain.installer.RootInstaller
 import app.morphe.manager.domain.installer.SessionInstaller
@@ -20,7 +27,12 @@ import app.morphe.manager.domain.repository.PatchOptionsRepository
 import app.morphe.manager.domain.repository.PatchSelectionRepository
 import app.morphe.manager.util.AppDataResolver
 import app.morphe.manager.util.AppDataSource
+import app.morphe.manager.util.AutomationIntents
+import app.morphe.manager.util.AutomationProfiles
+import app.morphe.manager.util.AutomationRequestGate
+import app.morphe.manager.util.KnownApps
 import app.morphe.manager.util.syncFcmTopics
+import app.morphe.manager.util.toast
 import app.morphe.manager.worker.UpdateCheckInterval
 import app.morphe.manager.worker.UpdateCheckWorker
 import app.morphe.patcher.dex.BytecodeMode
@@ -38,13 +50,85 @@ class SettingsViewModel(
     private val rootInstaller: RootInstaller,
     private val selectionRepository: PatchSelectionRepository,
     private val optionsRepository: PatchOptionsRepository,
-    patchBundleRepository: PatchBundleRepository,
+    private val patchBundleRepository: PatchBundleRepository,
     private val appDataResolver: AppDataResolver,
     private val appContext: Context,
 ) : ViewModel() {
     /** True when Google Play Services is available; FCM handles notifications on these devices. */
     val hasGms: Boolean = GoogleApiAvailability.getInstance()
         .isGooglePlayServicesAvailable(appContext) == ConnectionResult.SUCCESS
+
+    data class AutomationProfileAppOption(
+        val packageName: String,
+        val displayName: String
+    )
+
+    data class AutomationProfilePatchOption(
+        val name: String,
+        val recommended: Boolean
+    )
+
+    data class AutomationProfileSourceOption(
+        val uid: Int,
+        val name: String,
+        val patches: List<AutomationProfilePatchOption>,
+        val hasTargetPatches: Boolean
+    )
+
+    data class AutomationProfileOptions(
+        val apps: List<AutomationProfileAppOption> = emptyList(),
+        val sourcesByPackage: Map<String, List<AutomationProfileSourceOption>> = emptyMap()
+    )
+
+    val automationProfileOptions: StateFlow<AutomationProfileOptions> =
+        combine(
+            patchBundleRepository.appMetadata,
+            patchBundleRepository.bundleInfoFlow,
+            patchBundleRepository.sources
+        ) { metadata, bundleInfo, sources ->
+            val sourceTitles = sources.associate { it.uid to it.displayTitle }
+            val apps = metadata.values
+                .map { app ->
+                    AutomationProfileAppOption(
+                        packageName = app.packageName,
+                        displayName = app.displayName ?: KnownApps.getAppName(app.packageName)
+                    )
+                }
+                .sortedWith(compareBy({ it.displayName.lowercase() }, { it.packageName }))
+
+            val sourcesByPackage = apps.associate { app ->
+                val appSources = bundleInfo.values
+                    .map { it.forPackage(app.packageName, version = null) }
+                    .filter { it.patches.isNotEmpty() }
+                    .sortedWith(compareBy({ it.uid != DEFAULT_SOURCE_UID }, { sourceTitles[it.uid] ?: it.name }))
+                    .map { bundle ->
+                        val targetPatches = bundle.patches.filter { patch ->
+                            patch.compatiblePackages?.any { it.packageName == app.packageName } == true
+                        }
+                        val visiblePatches = targetPatches.ifEmpty { bundle.patches }
+                        AutomationProfileSourceOption(
+                            uid = bundle.uid,
+                            name = sourceTitles[bundle.uid] ?: bundle.name,
+                            patches = visiblePatches
+                                .distinctBy { it.name }
+                                .sortedBy { it.name.lowercase() }
+                                .map { patch ->
+                                    AutomationProfilePatchOption(
+                                        name = patch.name,
+                                        recommended = patch.include
+                                    )
+                                },
+                            hasTargetPatches = targetPatches.isNotEmpty()
+                        )
+                    }
+                app.packageName to appSources
+            }
+
+            AutomationProfileOptions(
+                apps = apps,
+                sourcesByPackage = sourcesByPackage
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, AutomationProfileOptions())
 
     /** True when POST_NOTIFICATIONS is granted (always true below Android 13). */
     fun hasNotificationPermission(): Boolean =
@@ -169,6 +253,9 @@ class SettingsViewModel(
 
     fun setExpertMode(enabled: Boolean) = viewModelScope.launch {
         prefs.useExpertMode.update(enabled)
+        if (!enabled) {
+            prefs.externalAutomationEnabled.update(false)
+        }
         if (enabled && !prefs.customFilePickerUserConfigured.get()) {
             prefs.useCustomFilePicker.update(true)
         }
@@ -185,6 +272,159 @@ class SettingsViewModel(
     /** Enables/disables native library stripping for plain APKs, and simultaneously split APK filtering for split bundles. */
     fun setStripUnusedNativeLibs(enabled: Boolean) = viewModelScope.launch {
         prefs.stripUnusedNativeLibs.update(enabled)
+    }
+
+    fun setExternalAutomationEnabled(enabled: Boolean) = viewModelScope.launch {
+        prefs.externalAutomationEnabled.update(enabled)
+    }
+
+    fun setExternalAutomationAllowPrepare(enabled: Boolean) = viewModelScope.launch {
+        prefs.externalAutomationAllowPrepare.update(enabled)
+    }
+
+    fun setExternalAutomationAllowStart(enabled: Boolean) = viewModelScope.launch {
+        prefs.externalAutomationAllowStart.update(enabled)
+    }
+
+    fun setExternalAutomationAllowSavedSource(enabled: Boolean) = viewModelScope.launch {
+        prefs.externalAutomationAllowSavedSource.update(enabled)
+    }
+
+    fun setExternalAutomationAllowInstalledSource(enabled: Boolean) = viewModelScope.launch {
+        prefs.externalAutomationAllowInstalledSource.update(enabled)
+    }
+
+    fun setExternalAutomationAllowMultipleSources(enabled: Boolean) = viewModelScope.launch {
+        prefs.externalAutomationAllowMultipleSources.update(enabled)
+    }
+
+    fun setExternalAutomationAllowRootMount(enabled: Boolean) = viewModelScope.launch {
+        prefs.externalAutomationAllowRootMount.update(enabled)
+    }
+
+    fun deleteAutomationProfile(id: String) = viewModelScope.launch {
+        prefs.automationProfiles.update(AutomationProfiles.remove(prefs.automationProfiles.get(), id))
+    }
+
+    fun saveAutomationProfile(
+        existingProfile: AutomationProfiles.Profile?,
+        name: String,
+        packageName: String,
+        source: AutomationIntents.Source,
+        patchAction: AutomationIntents.PatchAction,
+        allowMultipleSources: Boolean,
+        prePatchInstaller: AutomationIntents.PrePatchInstaller,
+        patchSelectionMode: AutomationIntents.PatchSelectionMode,
+        patchSourceUids: Set<Int>,
+        customPatchSelection: Map<Int, Set<String>>
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        val normalizedPackageName = AutomationIntents.normalizedPackageName(packageName)
+        if (normalizedPackageName == null) {
+            withContext(Dispatchers.Main) {
+                appContext.toast(appContext.getString(R.string.automation_profiles_invalid_package))
+            }
+            return@launch
+        }
+
+        val currentProfilesRaw = prefs.automationProfiles.get()
+        if (AutomationProfiles.decode(currentProfilesRaw).any {
+                it.id != existingProfile?.id && it.packageName == normalizedPackageName
+            }) {
+            withContext(Dispatchers.Main) {
+                appContext.toast(appContext.getString(R.string.automation_profiles_duplicate_package))
+            }
+            return@launch
+        }
+
+        val profileName = name.trim().takeIf { it.isNotBlank() }
+            ?: runCatching {
+                appDataResolver.resolveAppData(normalizedPackageName).displayName
+            }.getOrNull()
+            ?: KnownApps.getAppName(normalizedPackageName)
+
+        val profile = AutomationProfiles.Profile(
+            id = existingProfile?.id ?: AutomationProfiles.createId(normalizedPackageName),
+            name = profileName,
+            packageName = normalizedPackageName,
+            source = source.value,
+            patchAction = patchAction.value,
+            allowMultipleSources = allowMultipleSources,
+            prePatchInstaller = prePatchInstaller.value,
+            patchSelectionMode = patchSelectionMode.value,
+            patchSourceUids = patchSourceUids.sorted(),
+            customPatchSelection = customPatchSelection
+                .filterValues { it.isNotEmpty() }
+                .mapKeys { (uid, _) -> uid.toString() }
+                .mapValues { (_, patches) -> patches.sorted() },
+            createdAt = existingProfile?.createdAt ?: System.currentTimeMillis()
+        )
+        prefs.automationProfiles.update(AutomationProfiles.upsert(currentProfilesRaw, profile))
+
+        withContext(Dispatchers.Main) {
+            appContext.toast(appContext.getString(R.string.automation_profiles_saved, profile.name))
+        }
+    }
+
+    fun createAutomationProfile(
+        name: String,
+        packageName: String,
+        source: AutomationIntents.Source,
+        patchAction: AutomationIntents.PatchAction,
+        allowMultipleSources: Boolean,
+        prePatchInstaller: AutomationIntents.PrePatchInstaller
+    ) = saveAutomationProfile(
+        existingProfile = null,
+        name = name,
+        packageName = packageName,
+        source = source,
+        patchAction = patchAction,
+        allowMultipleSources = allowMultipleSources,
+        prePatchInstaller = prePatchInstaller,
+        patchSelectionMode = AutomationIntents.PatchSelectionMode.SAVED,
+        patchSourceUids = emptySet(),
+        customPatchSelection = emptyMap()
+    )
+
+    fun runAutomationProfile(
+        profile: AutomationProfiles.Profile,
+        onRun: (AutomationIntents.PatchRequest) -> Unit
+    ) {
+        val request = profile.toRequest()
+        AutomationRequestGate.blockedReason(prefs, request)?.let { reason ->
+            appContext.toast(AutomationRequestGate.blockedMessage(appContext, reason))
+            return
+        }
+        onRun(request)
+    }
+
+    fun requestAutomationProfileShortcut(profile: AutomationProfiles.Profile) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            appContext.toast(appContext.getString(R.string.automation_profiles_shortcut_unsupported))
+            return
+        }
+
+        val shortcutManager = appContext.getSystemService(ShortcutManager::class.java)
+        if (!shortcutManager.isRequestPinShortcutSupported) {
+            appContext.toast(appContext.getString(R.string.automation_profiles_shortcut_unsupported))
+            return
+        }
+
+        val shortcutIntent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse(AutomationProfiles.profileUri(profile.id))
+        )
+            .setClass(appContext, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        val shortcut = ShortcutInfo.Builder(appContext, "automation_profile_${profile.id}")
+            .setShortLabel(profile.name.take(20))
+            .setLongLabel(profile.name)
+            .setIcon(Icon.createWithResource(appContext, R.mipmap.ic_launcher))
+            .setIntent(shortcutIntent)
+            .build()
+
+        shortcutManager.requestPinShortcut(shortcut, null)
+        appContext.toast(appContext.getString(R.string.automation_profiles_shortcut_requested))
     }
 
     fun setBytecodeMode(mode: BytecodeMode) = viewModelScope.launch {

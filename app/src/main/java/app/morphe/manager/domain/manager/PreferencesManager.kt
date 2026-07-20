@@ -67,6 +67,15 @@ class PreferencesManager(
 
     val stripUnusedNativeLibs = booleanPreference("strip_unused_native_libs", false)
 
+    val externalAutomationEnabled = booleanPreference("external_automation_enabled", false)
+    val externalAutomationAllowPrepare = booleanPreference("external_automation_allow_prepare", true)
+    val externalAutomationAllowStart = booleanPreference("external_automation_allow_start", false)
+    val externalAutomationAllowSavedSource = booleanPreference("external_automation_allow_saved_source", true)
+    val externalAutomationAllowInstalledSource = booleanPreference("external_automation_allow_installed_source", false)
+    val externalAutomationAllowMultipleSources = booleanPreference("external_automation_allow_multiple_sources", false)
+    val externalAutomationAllowRootMount = booleanPreference("external_automation_allow_root_mount", false)
+    val automationProfiles = stringPreference("automation_profiles", "[]")
+
     /**
      * Bytecode processing mode for the patcher.
      * Defaults to [BytecodeMode.STRIP_FAST].

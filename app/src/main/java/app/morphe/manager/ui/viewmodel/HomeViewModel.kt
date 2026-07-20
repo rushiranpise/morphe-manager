@@ -336,6 +336,7 @@ class HomeViewModel(
     var resolvedDownloadUrl by mutableStateOf<String?>(null)
     var pendingSavedApkInfo by mutableStateOf<SavedApkInfo?>(null)
     var pendingInstalledApkInfo by mutableStateOf<InstalledApkInfo?>(null)
+    private var pendingAutomationRequest: AutomationIntents.PatchRequest? = null
     // null = not yet loaded, true/false = loaded result
     var pendingTargetAppInstalled by mutableStateOf<Boolean?>(null)
 
@@ -1674,7 +1675,10 @@ class HomeViewModel(
      * - SKIP dialog and auto-use saved APK when:
      *   - Simple mode + saved APK == recommended version
      */
-    fun showPatchDialog(packageName: String) {
+    fun showPatchDialog(
+        packageName: String,
+        automationRequest: AutomationIntents.PatchRequest? = null
+    ) {
         pendingPackageName = packageName
         pendingAppName = bundleAppMetadataFlow.value[packageName]?.displayName
             ?: KnownApps.getAppName(packageName)
@@ -1685,6 +1689,7 @@ class HomeViewModel(
         // Reset per-package cached state so a new flow always loads fresh data
         pendingSavedApkInfo = null
         pendingInstalledApkInfo = null
+        pendingAutomationRequest = automationRequest
         pendingTargetAppInstalled = null
 
         // Guard: if there is a pending bundle update on metered data, show the outdated-patches
@@ -1745,6 +1750,9 @@ class HomeViewModel(
      * open the APK availability dialog.
      */
     private suspend fun continueApkSelectionFlow(packageName: String) {
+        val automationRequest = pendingAutomationRequest
+        val automationSource = automationRequest?.source
+
         // Load saved APK (Room + AppDataResolver) and, in expert mode only, installed APK
         // (PackageManager) in parallel. In simple mode the installed-APK button is hidden,
         // so we skip the PM lookup entirely to keep simple-mode behavior unchanged
@@ -1753,13 +1761,41 @@ class HomeViewModel(
             val savedJob = if (pendingSavedApkInfo == null) {
                 async(Dispatchers.IO) { loadSavedApkInfo(packageName) }
             } else null
-            val installedJob = if (expertMode && pendingTargetAppInstalled == null) {
+            val shouldLoadInstalledApk =
+                (expertMode || automationSource == AutomationIntents.Source.INSTALLED) &&
+                        pendingTargetAppInstalled == null
+            val installedJob = if (shouldLoadInstalledApk) {
                 async(Dispatchers.IO) { loadInstalledInfo(packageName) }
             } else null
             savedJob?.await()?.let { pendingSavedApkInfo = it }
             installedJob?.await()?.let { (installed, info) ->
                 pendingTargetAppInstalled = installed
                 pendingInstalledApkInfo = info?.takeIf { isInstalledVersionCompatible(it.version, it.versionCode) }
+            }
+        }
+
+        when (automationSource) {
+            AutomationIntents.Source.SAVED -> {
+                if (pendingSavedApkInfo != null) {
+                    handleSavedApkSelection()
+                    return
+                }
+                pendingAutomationRequest = null
+                app.toast(app.getString(R.string.automation_intents_source_unavailable))
+            }
+            AutomationIntents.Source.INSTALLED -> {
+                if (pendingInstalledApkInfo != null) {
+                    handleInstalledApkSelection()
+                    return
+                }
+                pendingAutomationRequest = null
+                app.toast(app.getString(R.string.automation_intents_source_unavailable))
+            }
+            else -> {
+                if (automationRequest?.patchAction == AutomationIntents.PatchAction.START) {
+                    pendingAutomationRequest = null
+                    app.toast(app.getString(R.string.automation_intents_source_required))
+                }
             }
         }
 
@@ -2391,13 +2427,114 @@ class HomeViewModel(
      */
     suspend fun processSelectedAppIgnoringSignature(selectedApp: SelectedApp) {
         val allowIncompatible = prefs.disablePatchVersionCompatCheck.getBlocking()
-        if (rootInstaller.isDeviceRooted()) {
-            requestPrePatchInstallerSelection(selectedApp, allowIncompatible)
-        } else {
+        val automationRequest = pendingAutomationRequest
+        val isRooted = rootInstaller.isDeviceRooted()
+
+        if (!isRooted) {
+            if (automationRequest?.prePatchInstaller == AutomationIntents.PrePatchInstaller.MOUNT) {
+                app.toast(app.getString(R.string.automation_intents_mount_requires_root))
+                if (selectedApp is SelectedApp.Local && selectedApp.temporary) {
+                    selectedApp.file.delete()
+                }
+                cleanupPendingData()
+                return
+            }
             usingMountInstall = false
             startPatchingWithApp(selectedApp, allowIncompatible)
+            return
+        }
+
+        when (automationRequest?.prePatchInstaller) {
+            AutomationIntents.PrePatchInstaller.MANAGER -> {
+                usingMountInstall = shouldUseMountForManagerInstaller()
+                startPatchingWithApp(selectedApp, allowIncompatible)
+            }
+            AutomationIntents.PrePatchInstaller.MOUNT -> {
+                usingMountInstall = true
+                startPatchingWithApp(selectedApp, allowIncompatible)
+            }
+            AutomationIntents.PrePatchInstaller.STANDARD -> {
+                usingMountInstall = false
+                startPatchingWithApp(selectedApp, allowIncompatible)
+            }
+            else -> {
+                requestPrePatchInstallerSelection(selectedApp, allowIncompatible)
+            }
         }
     }
+
+    private fun shouldUseMountForManagerInstaller(): Boolean {
+        val rootInstallers = setOf(
+            InstallerPreferenceTokens.AUTO_SAVED,
+            InstallerPreferenceTokens.ROOT,
+            InstallerPreferenceTokens.ROOT_PLAY_STORE
+        )
+        return prefs.installerPrimary.getBlocking() in rootInstallers
+    }
+
+    private fun openExpertModeDialog(
+        selectedApp: SelectedApp,
+        bundles: List<PatchBundleInfo.Scoped>,
+        patches: PatchSelection,
+        options: Options,
+        newPatches: Map<Int, Set<String>>
+    ) {
+        expertModeSelectedApp = selectedApp
+        expertModeBundles = bundles
+        patches.toMutableMap().also {
+            expertModePatches = it
+            expertModeInitialPatches = it
+        }
+        expertModeOptions = options.toMutableMap()
+        expertModeNewPatches = newPatches
+        showExpertModeDialog = true
+    }
+
+    private fun automationStartReviewMessage(
+        request: AutomationIntents.PatchRequest,
+        bundles: List<PatchBundleInfo.Scoped>,
+        patches: PatchSelection,
+        options: Options
+    ): Int? {
+        if (patches.values.sumOf { it.size } == 0) {
+            return R.string.automation_intents_no_patches_selected
+        }
+
+        if (!request.allowMultipleSources && patches.count { (_, names) -> names.isNotEmpty() } > 1) {
+            return R.string.automation_intents_multiple_sources_review
+        }
+
+        if (hasMissingRequiredPatchOptions(bundles, patches, options)) {
+            return R.string.automation_intents_required_options_review
+        }
+
+        return null
+    }
+
+    private fun hasMissingRequiredPatchOptions(
+        bundles: List<PatchBundleInfo.Scoped>,
+        patches: PatchSelection,
+        options: Options
+    ): Boolean =
+        bundles.any bundleHasMissing@{ bundle ->
+            val selectedNames = patches[bundle.uid].orEmpty()
+            if (selectedNames.isEmpty()) return@bundleHasMissing false
+
+            bundle.patches.any patchHasMissing@{ patch ->
+                if (patch.name !in selectedNames) return@patchHasMissing false
+
+                patch.options?.any optionIsMissing@{ option ->
+                    if (!option.required) return@optionIsMissing false
+                    val savedValue = options[bundle.uid]?.get(patch.name)?.get(option.key)
+                    val effectiveValue = savedValue ?: option.default
+                    effectiveValue == null || (
+                            effectiveValue is String &&
+                                    effectiveValue.isBlank() &&
+                                    !(option.default is String && option.default.isBlank())
+                            )
+                } == true
+            }
+        }
 
     /**
      * Start patching flow.
@@ -2416,8 +2553,21 @@ class HomeViewModel(
             return
         }
 
+        val automationRequest = pendingAutomationRequest
+        val sourceScopedBundles = automationRequest
+            ?.patchSourceUids
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { requestedSourceUids -> allBundles.filter { it.uid in requestedSourceUids } }
+            ?: allBundles
+
+        if (sourceScopedBundles.isEmpty()) {
+            app.toast(app.getString(R.string.home_no_patches_available))
+            cleanupPendingData()
+            return
+        }
+
         // Create bundles map for validation
-        val bundlesMap = allBundles.associate { it.uid to it.patches.associateBy { patch -> patch.name } }
+        val bundlesMap = sourceScopedBundles.associate { it.uid to it.patches.associateBy { patch -> patch.name } }
 
         // Helper function to apply GmsCore filter if needed
         fun PatchSelection.applyGmsCoreFilter(): PatchSelection =
@@ -2425,7 +2575,7 @@ class HomeViewModel(
 
         if (isExpertMode()) {
             // Expert Mode: Load saved selections and options only for current bundles
-            val currentBundleUids = allBundles.map { it.uid }.toSet()
+            val currentBundleUids = sourceScopedBundles.map { it.uid }.toSet()
 
             // Load selections
             val savedSelections = withContext(Dispatchers.IO) {
@@ -2440,7 +2590,7 @@ class HomeViewModel(
             }
 
             // Use saved selections or create new ones
-            val patches = if (savedSelections.isNotEmpty()) {
+            val savedOrRecommendedPatches = if (savedSelections.isNotEmpty()) {
                 // Count patches before validation
                 val patchesBeforeValidation = savedSelections.values.sumOf { it.size }
 
@@ -2466,7 +2616,7 @@ class HomeViewModel(
                 val mergedPatches = buildMap {
                     // Start from the validated (post-removal) selection
                     putAll(validatedPatches)
-                    allBundles.forEach { bundle ->
+                    sourceScopedBundles.forEach { bundle ->
                         // Use seen-patch snapshot to determine what's genuinely new.
                         // Comparing against savedForBundle (only selected patches) would
                         // incorrectly re-enable patches the user explicitly deselected.
@@ -2495,7 +2645,18 @@ class HomeViewModel(
                 mergedPatches
             } else {
                 // No saved selections - use default for all current bundles
-                allBundles.toPatchSelection(allowIncompatible) { _, patch -> patch.include }
+                sourceScopedBundles.toPatchSelection(allowIncompatible) { _, patch -> patch.include }
+            }
+
+            val patches = when (automationRequest?.patchSelectionMode) {
+                AutomationIntents.PatchSelectionMode.RECOMMENDED ->
+                    sourceScopedBundles.toPatchSelection(allowIncompatible) { _, patch -> patch.include }
+                AutomationIntents.PatchSelectionMode.CUSTOM ->
+                    validatePatchSelection(
+                        automationRequest.customPatchSelection.filterKeys { it in currentBundleUids },
+                        bundlesMap
+                    )
+                else -> savedOrRecommendedPatches
             }.applyGmsCoreFilter()
 
             // Compute new patches map for the dialog to highlight.
@@ -2507,7 +2668,7 @@ class HomeViewModel(
             // as new on every subsequent open.
             val newPatchesMap: Map<Int, Set<String>> = if (savedSelections.isNotEmpty()) {
                 buildMap {
-                    allBundles.forEach { bundle ->
+                    sourceScopedBundles.forEach { bundle ->
                         val seenForBundle = withContext(Dispatchers.IO) {
                             patchSelectionRepository.getSeenPatches(selectedApp.packageName, bundle.uid)
                         }
@@ -2533,19 +2694,42 @@ class HomeViewModel(
                 }
             }
 
-            expertModeSelectedApp = selectedApp
-            expertModeBundles = allBundles
-            patches.toMutableMap().also { expertModePatches = it; expertModeInitialPatches = it }
-            expertModeOptions = validatedOptions.toMutableMap()
-            expertModeNewPatches = newPatchesMap
-            showExpertModeDialog = true
+            if (automationRequest?.patchAction == AutomationIntents.PatchAction.START) {
+                val reviewMessage = automationStartReviewMessage(
+                    request = automationRequest,
+                    bundles = sourceScopedBundles,
+                    patches = patches,
+                    options = validatedOptions
+                )
+                if (reviewMessage != null) {
+                    pendingAutomationRequest = null
+                    openExpertModeDialog(selectedApp, sourceScopedBundles, patches, validatedOptions, newPatchesMap)
+                    app.toast(app.getString(reviewMessage))
+                    return
+                }
+
+                withContext(Dispatchers.IO) {
+                    patchSelectionRepository.updateSelection(
+                        packageName = selectedApp.packageName,
+                        selection = patches
+                    )
+                    optionsRepository.saveOptions(selectedApp.packageName, validatedOptions)
+                    saveSeenPatchesForBundles(selectedApp.packageName, sourceScopedBundles)
+                }
+
+                pendingAutomationRequest = null
+                proceedWithPatching(selectedApp, patches, validatedOptions.sanitizeForPatcher())
+                return
+            }
+
+            openExpertModeDialog(selectedApp, sourceScopedBundles, patches, validatedOptions, newPatchesMap)
         } else {
             // Simple Mode: collect patches from all enabled bundles, then either use the sole result directly
             // or ask the user to pick one if multiple bundles have applicable patches.
             // A patch is applicable if:
             //   - compatiblePackages == null (universal), OR
             //   - compatiblePackages contains this packageName
-            val bundleWithPatches = allBundles
+            val bundleWithPatches = sourceScopedBundles
                 .filter { it.enabled }
                 .map { bundle ->
                     val patchNames = bundle.patchSequence(allowIncompatible)
@@ -2560,7 +2744,7 @@ class HomeViewModel(
                 // This is the case for third-party bundles where all universal patches
                 // ship with use=false and require explicit user configuration.
                 // Fall through to expert mode so the user can select and configure patches.
-                val currentBundleUids = allBundles.map { it.uid }.toSet()
+                val currentBundleUids = sourceScopedBundles.map { it.uid }.toSet()
 
                 val savedSelections = withContext(Dispatchers.IO) {
                     patchSelectionRepository.getAllSelectionsForPackage(selectedApp.packageName)
@@ -2571,11 +2755,7 @@ class HomeViewModel(
                         .filterKeys { it in currentBundleUids }
                 }
 
-                expertModeSelectedApp = selectedApp
-                expertModeBundles = allBundles
-                savedSelections.toMutableMap().also { expertModePatches = it; expertModeInitialPatches = it }
-                expertModeOptions = savedOptions.toMutableMap()
-                showExpertModeDialog = true
+                openExpertModeDialog(selectedApp, sourceScopedBundles, savedSelections, savedOptions, emptyMap())
                 return
             }
 
@@ -2586,7 +2766,7 @@ class HomeViewModel(
             val preSelectedUid = pendingSelectedBundleUid
             if (preSelectedUid != null) {
                 pendingSelectedBundleUid = null
-                val bundle = allBundles.find { it.uid == preSelectedUid }
+                val bundle = sourceScopedBundles.find { it.uid == preSelectedUid }
                 if (bundle != null) {
                     val patchNames = bundle.patchSequence(allowIncompatible = true)
                         .filter { it.include }
@@ -2654,6 +2834,7 @@ class HomeViewModel(
         pendingRecommendedBundleVersions = emptyMap()
         pendingSelectedDownloadVersion = null
         pendingSelectedBundleUid = null
+        pendingAutomationRequest = null
         resolvedDownloadUrl = null
         showDownloadInstructionsDialog = false
         showFilePickerPromptDialog = false
@@ -2764,11 +2945,84 @@ class HomeViewModel(
         expertModeOptions = expertModeOptions.resetOptionsForPatch(bundleUid, patchName)
     }
 
+    fun saveAutomationProfileFromExpertMode() {
+        val selectedApp = expertModeSelectedApp ?: return
+        val finalPatches = expertModePatches
+        val finalOptions = expertModeOptions
+        val finalBundles = expertModeBundles
+        val hasMultipleBundles = finalPatches.count { (_, patches) -> patches.isNotEmpty() } > 1
+        val source = when (selectedApp) {
+            is SelectedApp.Local if selectedApp.fromInstalledDevice ->
+                AutomationIntents.Source.INSTALLED
+            is SelectedApp.Local if !selectedApp.temporary ->
+                AutomationIntents.Source.SAVED
+            is SelectedApp.Installed ->
+                AutomationIntents.Source.INSTALLED
+            else -> null
+        }
+
+        if (source == null) {
+            app.toast(app.getString(R.string.automation_profiles_save_unavailable))
+            return
+        }
+
+        if (finalPatches.values.sumOf { it.size } == 0) {
+            app.toast(app.getString(R.string.automation_intents_no_patches_selected))
+            return
+        }
+
+        if (hasMissingRequiredPatchOptions(finalBundles, finalPatches, finalOptions)) {
+            app.toast(app.getString(R.string.automation_intents_required_options_review))
+            return
+        }
+
+        val profileName = pendingAppName
+            ?: bundleAppMetadataFlow.value[selectedApp.packageName]?.displayName
+            ?: KnownApps.getAppName(selectedApp.packageName)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            patchSelectionRepository.updateSelection(
+                packageName = selectedApp.packageName,
+                selection = finalPatches
+            )
+            optionsRepository.saveOptions(selectedApp.packageName, finalOptions)
+            saveSeenPatchesForBundles(selectedApp.packageName, finalBundles)
+
+            val existingProfiles = AutomationProfiles.decode(prefs.automationProfiles.get())
+            val existingProfile = existingProfiles.firstOrNull { it.id == selectedApp.packageName }
+            val profile = AutomationProfiles.Profile(
+                id = existingProfile?.id ?: selectedApp.packageName,
+                name = profileName,
+                packageName = selectedApp.packageName,
+                source = source.value,
+                patchAction = AutomationIntents.PatchAction.START.value,
+                allowMultipleSources = hasMultipleBundles,
+                prePatchInstaller = if (usingMountInstall) {
+                    AutomationIntents.PrePatchInstaller.MOUNT.value
+                } else {
+                    AutomationIntents.PrePatchInstaller.MANAGER.value
+                },
+                patchSelectionMode = AutomationIntents.PatchSelectionMode.SAVED.value,
+                patchSourceUids = finalPatches
+                    .filterValues { it.isNotEmpty() }
+                    .keys
+                    .sorted(),
+                createdAt = existingProfile?.createdAt ?: Clock.System.now().toEpochMilliseconds()
+            )
+            prefs.automationProfiles.update(AutomationProfiles.upsert(prefs.automationProfiles.get(), profile))
+
+            withContext(Dispatchers.Main) {
+                app.toast(app.getString(R.string.automation_profiles_saved, profile.name))
+            }
+        }
+    }
+
     /**
      * Clean up expert mode data.
      */
     fun cleanupExpertModeData() {
         showExpertModeDialog = false
+        pendingAutomationRequest = null
         expertModeSelectedApp = null
         expertModeBundles = emptyList()
         expertModePatches = emptyMap()
@@ -2777,8 +3031,11 @@ class HomeViewModel(
         expertModeNewPatches = emptyMap()
     }
 
-    private suspend fun saveSeenPatchesForBundles(packageName: String) {
-        expertModeBundles.forEach { bundle ->
+    private suspend fun saveSeenPatchesForBundles(
+        packageName: String,
+        bundles: List<PatchBundleInfo.Scoped> = expertModeBundles
+    ) {
+        bundles.forEach { bundle ->
             patchSelectionRepository.saveSeenPatches(
                 packageName = packageName,
                 bundleUid = bundle.uid,
@@ -2801,6 +3058,7 @@ class HomeViewModel(
         val patcherOptions = finalOptions.sanitizeForPatcher()
 
         showExpertModeDialog = false
+        pendingAutomationRequest = null
 
         viewModelScope.launch(Dispatchers.IO) {
             patchSelectionRepository.updateSelection(
@@ -2905,6 +3163,7 @@ class HomeViewModel(
         resolvedDownloadUrl = null
         pendingSavedApkInfo = null
         pendingInstalledApkInfo = null
+        pendingAutomationRequest = null
         pendingTargetAppInstalled = null
         if (!keepSelectedApp) {
             pendingSelectedApp?.let { app ->

@@ -421,6 +421,9 @@ fun HomeDialogs(
             onDismiss = {
                 homeViewModel.cleanupExpertModeData()
             },
+            onSaveProfile = {
+                homeViewModel.saveAutomationProfileFromExpertMode()
+            },
             onProceed = {
                 homeViewModel.proceedExpertMode()
             }
