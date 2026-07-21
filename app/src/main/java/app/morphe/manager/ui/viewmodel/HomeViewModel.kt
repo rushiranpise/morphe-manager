@@ -19,6 +19,7 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.morphe.manager.R
@@ -203,6 +204,11 @@ private data class HomeCategoryPrefs(
     val categoryViewMode: HomeAppCategoryViewMode,
     val showCategoryViewSwitcher: Boolean,
     val expandedSourceGroups: Set<Int>
+)
+
+private data class HomeDisplayPrefs(
+    val homePrefs: HomePrefs,
+    val appCardColors: List<Color>?
 )
 
 /**
@@ -1181,6 +1187,32 @@ class HomeViewModel(
         )
     }
 
+    private val _appCardColorsFlow = combine(
+        prefs.appCardColorMode.flow,
+        prefs.customAppCardGradientStart.flow,
+        prefs.customAppCardGradientMiddle.flow,
+        prefs.customAppCardGradientEnd.flow,
+        prefs.customAppCardSolidColor.flow
+    ) { mode, start, middle, end, solid ->
+        AppCardColorDefaults.colorsOrNull(
+            mode = mode,
+            startHex = start,
+            middleHex = middle,
+            endHex = end,
+            solidHex = solid
+        )
+    }
+
+    private val _homeDisplayPrefsFlow = combine(
+        _homePrefsFlow,
+        _appCardColorsFlow
+    ) { homePrefs, appCardColors ->
+        HomeDisplayPrefs(
+            homePrefs = homePrefs,
+            appCardColors = appCardColors
+        )
+    }
+
     /**
     * Sorted list of visible and hidden home app items.
     *
@@ -1190,7 +1222,7 @@ class HomeViewModel(
     */
     val homeAppState: StateFlow<HomeAppState?> = combine(
         patchBundleRepository.bundleState,
-        _homePrefsFlow,
+        _homeDisplayPrefsFlow,
         installedAppRepository.getAll().onEach { apps ->
             apps.forEach { app ->
                 appDataResolver.invalidate(app.currentPackageName)
@@ -1211,9 +1243,11 @@ class HomeViewModel(
             updatesMap to compatibleVersions
         },
         _appStateTicker,
-    ) { bundleState, homePrefs, installedApps, versionData, _ ->
+    ) { bundleState, displayPrefs, installedApps, versionData, _ ->
         val ready = bundleState as? PatchBundleRepository.BundleState.Ready
             ?: return@combine null
+        val homePrefs = displayPrefs.homePrefs
+        val appCardColors = displayPrefs.appCardColors
         val (updatesMap, compatibleVersions) = versionData
 
         val enabledInfo = ready.info.filter { (_, info) -> info.enabled }
@@ -1233,7 +1267,7 @@ class HomeViewModel(
             val installedApp = installedMap[packageName]
             val bundleMeta = metadata[packageName]
             val knownApp = KnownApps.fromPackage(packageName)
-            val gradientColors = bundleMeta?.gradientColors ?: KnownApps.DEFAULT_COLORS
+            val gradientColors = appCardColors ?: bundleMeta?.gradientColors ?: KnownApps.DEFAULT_COLORS
             val resolvedData = appDataResolver.resolveAppData(
                 packageName = packageName,
                 preferredSource = AppDataSource.PATCHED_APK

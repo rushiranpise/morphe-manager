@@ -20,9 +20,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Science
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import app.morphe.manager.R
 import app.morphe.manager.data.room.apps.installed.InstalledApp
 import app.morphe.manager.ui.screen.shared.AppIcon
+import app.morphe.manager.ui.screen.shared.FrostedGlassChip
 import app.morphe.manager.ui.screen.shared.ShimmerBox
 import app.morphe.manager.ui.screen.shared.drawDiagonalShimmer
 import app.morphe.manager.ui.theme.LocalMonochromeTheme
@@ -197,31 +196,13 @@ private fun GlassChip(
     val chipContainerColor = containerColor ?: cardStyle.chipContainerColor
     val chipContentColor = contentColor ?: cardStyle.chipContentColor
 
-    Surface(
+    FrostedGlassChip(
+        text = text,
+        icon = icon,
+        containerColor = chipContainerColor,
+        contentColor = chipContentColor,
         modifier = modifier,
-        shape = RoundedCornerShape(6.dp),
-        color = chipContainerColor
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = chipContentColor,
-                modifier = Modifier.size(12.dp)
-            )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
-                color = chipContentColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
+    )
 }
 
 /**
