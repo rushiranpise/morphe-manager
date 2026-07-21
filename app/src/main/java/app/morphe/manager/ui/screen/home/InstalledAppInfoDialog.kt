@@ -54,6 +54,7 @@ import app.morphe.manager.ui.viewmodel.HomeViewModel
 import app.morphe.manager.ui.viewmodel.InstallViewModel
 import app.morphe.manager.ui.viewmodel.InstalledAppInfoViewModel
 import app.morphe.manager.ui.viewmodel.SettingsViewModel
+import app.morphe.manager.ui.viewmodel.ThemeSettingsViewModel
 import app.morphe.manager.util.*
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
@@ -78,7 +79,8 @@ fun InstalledAppInfoDialog(
     homeViewModel: HomeViewModel,
     viewModel: InstalledAppInfoViewModel,
     installViewModel: InstallViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel()
+    settingsViewModel: SettingsViewModel = koinViewModel(),
+    themeViewModel: ThemeSettingsViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
     val installedApp = viewModel.installedApp
@@ -94,6 +96,16 @@ fun InstalledAppInfoDialog(
     // Get update status from the shared HomeViewModel instance
     val appUpdates by homeViewModel.appUpdatesAvailable.collectAsStateWithLifecycle()
     val hasUpdate = appUpdates[packageName] == true
+    val backgroundType by settingsViewModel.prefs.backgroundType.getAsState()
+    val enableBackgroundParallax by settingsViewModel.prefs.enableBackgroundParallax.getAsState()
+    val randomBackgroundInterval by settingsViewModel.prefs.randomBackgroundInterval.getAsState()
+    val resolvedRandomBackground by themeViewModel.resolvedRandomBackground.collectAsStateWithLifecycle()
+
+    LaunchedEffect(backgroundType, randomBackgroundInterval) {
+        if (backgroundType == BackgroundType.RANDOM) {
+            themeViewModel.resolveRandomBackground(randomBackgroundInterval)
+        }
+    }
 
     // Accent color resolution order: bundle metadata (appIconColor) -> KnownApps.brandColor -> default.
     // originalPackageName needed because metadata is keyed by original pkg, not patched.
@@ -327,7 +339,20 @@ fun InstalledAppInfoDialog(
         dismissOnClickOutside = true,
         padding = DialogPadding.None,
         footer = null,
-        onEntered = { entered.value = true }
+        onEntered = { entered.value = true },
+        background = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                AnimatedBackground(
+                    type = backgroundType,
+                    resolvedType = resolvedRandomBackground,
+                    enableParallax = enableBackgroundParallax
+                )
+            }
+        }
     ) {
         if (isLoading || installedApp == null) {
             Box(

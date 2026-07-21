@@ -67,6 +67,7 @@ enum class DialogTitleActionStyle {
  * @param title Optional title displayed at the top.
  * @param titleTrailingContent Optional content displayed after the title.
  * @param footer Optional footer content.
+ * @param background Optional fullscreen background drawn behind dialog content.
  * @param dismissOnClickOutside Whether clicking outside dismisses the dialog.
  * @param scrollable Whether to wrap content in verticalScroll. Set to false for LazyColumn. Default is true.
  * @param padding Outer padding mode. Default is [DialogPadding.Normal].
@@ -84,6 +85,7 @@ fun MorpheDialog(
     padding: DialogPadding = DialogPadding.Normal,
     contentArrangement: Arrangement.Vertical = Arrangement.Center,
     onEntered: (() -> Unit)? = null,
+    background: (@Composable BoxScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val isDarkTheme = MaterialTheme.colorScheme.background.isDarkBackground()
@@ -119,7 +121,13 @@ fun MorpheDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .then(
+                    if (background == null) {
+                        Modifier.background(MaterialTheme.colorScheme.background)
+                    } else {
+                        Modifier
+                    }
+                )
                 .then(
                     if (dismissOnClickOutside) {
                         Modifier.pointerInput(Unit) {
@@ -128,6 +136,7 @@ fun MorpheDialog(
                     } else Modifier
                 )
         ) {
+            background?.invoke(this)
 
             AnimatedVisibility(
                 visible = visible,
