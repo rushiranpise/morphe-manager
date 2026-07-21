@@ -969,6 +969,7 @@ Details: %2$s"</string>
     <string name="no">No</string>
     <string name="all">All</string>
     <string name="filter">Filter</string>
+    <string name="home_app_version_chip_format">%1$s %2$s</string>
     <string name="reset">Reset</string>
     <string name="reset_all">Reset All</string>
     <string name="confirm">Confirm</string>
@@ -1042,6 +1043,7 @@ Details: %2$s"</string>
     <string name="reinstall">Reinstall</string>
     <string name="uninstall">Uninstall</string>
     <string name="uninstalled">Uninstalled</string>
+    <string name="upgrade">Upgrade</string>
     <string name="save">Save</string>
     <string name="saved">Saved</string>
     <string name="update">Update</string>

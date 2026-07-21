@@ -357,6 +357,8 @@ internal fun DynamicAppCard(
                                 gradientColors = item.gradientColors,
                                 onClick = onAppClick,
                                 hasUpdate = hasUpdate,
+                                upgradeVersion = item.upgradeVersion,
+                                experimentalVersion = item.experimentalVersion,
                                 isAppDeleted = item.isDeleted,
                                 onLongClick = {
                                     view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -486,6 +488,8 @@ internal fun HiddenSearchAppCard(
                     gradientColors = item.gradientColors,
                     onClick = onAppClick,
                     hasUpdate = item.hasUpdate,
+                    upgradeVersion = item.upgradeVersion,
+                    experimentalVersion = item.experimentalVersion,
                     isAppDeleted = item.isDeleted,
                     onLongClick = {}
                 )

@@ -21,5 +21,7 @@ data class HomeAppItem(
     val isDeleted: Boolean,
     val hasSavedCopy: Boolean,
     val hasUpdate: Boolean,
+    val upgradeVersion: String?,
+    val experimentalVersion: String?,
     val patchCount: Int
 )

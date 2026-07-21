@@ -7,7 +7,6 @@ package app.morphe.manager.ui.screen.home
 
 import android.content.pm.PackageInfo
 import android.view.HapticFeedbackConstants
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -17,7 +16,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -51,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import app.morphe.manager.R
 import app.morphe.manager.data.room.apps.installed.InstalledApp
 import app.morphe.manager.ui.screen.shared.AppIcon
-import app.morphe.manager.ui.screen.shared.MorpheAnimations
 import app.morphe.manager.ui.screen.shared.ShimmerBox
 import app.morphe.manager.ui.screen.shared.drawDiagonalShimmer
 import app.morphe.manager.ui.theme.LocalMonochromeTheme
@@ -135,7 +136,8 @@ internal fun RowScope.AppCardContent(
     packageInfo: PackageInfo?,
     displayName: String,
     subtitle: String?,
-    gradientColors: List<Color>
+    gradientColors: List<Color>,
+    subtitleIcon: ImageVector? = null
 ) {
     val cardStyle = homeAppCardStyle()
 
@@ -162,11 +164,18 @@ internal fun RowScope.AppCardContent(
         )
 
         if (subtitle != null) {
-            Text(
-                text = subtitle,
-                style = cardStyle.subtitleStyle,
-                color = cardStyle.subtitleColor
-            )
+            if (subtitleIcon != null) {
+                GlassChip(
+                    text = subtitle,
+                    icon = subtitleIcon
+                )
+            } else {
+                Text(
+                    text = subtitle,
+                    style = cardStyle.subtitleStyle,
+                    color = cardStyle.subtitleColor
+                )
+            }
         }
     }
 }
@@ -180,14 +189,18 @@ internal fun RowScope.AppCardContent(
 private fun GlassChip(
     text: String,
     icon: ImageVector,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    containerColor: Color? = null,
+    contentColor: Color? = null
 ) {
     val cardStyle = homeAppCardStyle()
+    val chipContainerColor = containerColor ?: cardStyle.chipContainerColor
+    val chipContentColor = contentColor ?: cardStyle.chipContentColor
 
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(6.dp),
-        color = cardStyle.chipContainerColor
+        color = chipContainerColor
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -197,13 +210,15 @@ private fun GlassChip(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = cardStyle.chipContentColor,
+                tint = chipContentColor,
                 modifier = Modifier.size(12.dp)
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelSmall,
-                color = cardStyle.chipContentColor
+                color = chipContentColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -221,29 +236,77 @@ fun InstalledAppCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     hasUpdate: Boolean = false,
+    upgradeVersion: String? = null,
+    experimentalVersion: String? = null,
     isAppDeleted: Boolean = false,
     onLongClick: (() -> Unit)? = null
 ) {
     val cardStyle = homeAppCardStyle(subtitleAlpha = 0.85f)
 
-    val versionLabel = stringResource(R.string.version)
     val installedLabel = stringResource(R.string.installed)
+    val availableLabel = stringResource(R.string.available)
+    val upgradeLabel = stringResource(R.string.upgrade)
+    val experimentalLabel = stringResource(R.string.home_dialog_unsupported_version_experimental_label)
     val updateAvailableLabel = stringResource(R.string.update_available)
     val deletedLabel = stringResource(R.string.uninstalled)
-
-    val version = remember(packageInfo, installedApp, isAppDeleted) {
-        val raw = packageInfo?.versionName ?: installedApp.version
-        if (raw.startsWith("v")) raw else "v$raw"
+    val statusLabel = if (isAppDeleted) availableLabel else installedLabel
+    val deletedContainerColor = if (cardStyle.monochrome) {
+        MaterialTheme.colorScheme.errorContainer
+    } else {
+        MaterialTheme.colorScheme.error.copy(alpha = 0.36f)
+    }
+    val deletedContentColor = if (cardStyle.monochrome) {
+        MaterialTheme.colorScheme.onErrorContainer
+    } else {
+        Color.White
     }
 
-    val contentDesc = remember(displayName, version, versionLabel, installedLabel, hasUpdate, updateAvailableLabel, isAppDeleted, deletedLabel) {
+    val version = remember(packageInfo, installedApp) {
+        val raw = installedApp.version.ifBlank { packageInfo?.versionName.orEmpty() }
+        versionWithPrefix(raw)
+    }
+
+    val versionChipText = stringResource(
+        R.string.home_app_version_chip_format,
+        statusLabel,
+        version
+    )
+    val upgradeChipText = upgradeVersion?.let {
+        stringResource(
+            R.string.home_app_version_chip_format,
+            upgradeLabel,
+            versionWithPrefix(it)
+        )
+    }
+    val experimentalChipText = experimentalVersion?.let {
+        stringResource(
+            R.string.home_app_version_chip_format,
+            experimentalLabel,
+            versionWithPrefix(it)
+        )
+    }
+    val showUpgradeChip = upgradeChipText != null && !isAppDeleted
+    val showExperimentalChip = experimentalChipText != null && !isAppDeleted
+    val hasSecondaryVersionRow = showUpgradeChip || showExperimentalChip
+    val hasTertiaryVersionRow = showUpgradeChip && showExperimentalChip
+
+    val contentDesc = remember(
+        displayName,
+        versionChipText,
+        upgradeChipText,
+        experimentalChipText,
+        hasUpdate,
+        updateAvailableLabel,
+        isAppDeleted,
+        deletedLabel
+    ) {
         buildString {
             append(displayName)
-            if (version.isNotEmpty()) {
-                append(", $versionLabel $version")
-            }
             append(", ")
-            append(if (isAppDeleted) deletedLabel else installedLabel)
+            append(versionChipText)
+            if (isAppDeleted) append(", $deletedLabel")
+            if (upgradeChipText != null) append(", $upgradeChipText")
+            if (experimentalChipText != null) append(", $experimentalChipText")
             if (hasUpdate && !isAppDeleted) append(", $updateAvailableLabel")
         }
     }
@@ -256,6 +319,11 @@ fun InstalledAppCard(
         modifier = modifier.semantics {
             role = Role.Button
             this.contentDescription = contentDesc
+        },
+        cardHeight = when {
+            hasTertiaryVersionRow -> 120.dp
+            hasSecondaryVersionRow -> 96.dp
+            else -> null
         }
     ) {
         // App icon
@@ -281,41 +349,60 @@ fun InstalledAppCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Version + deleted status + inline update chip
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    modifier = Modifier.weight(1f, fill = false),
-                    text = version,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = cardStyle.subtitleStyle,
-                    color = cardStyle.subtitleColor
-                )
-
-                if (isAppDeleted) {
-                    GlassChip(
-                        text = stringResource(R.string.uninstalled),
-                        icon = Icons.Outlined.DeleteOutline
-                    )
-                }
-
-                AnimatedVisibility(
-                    visible = hasUpdate && !isAppDeleted,
-                    enter = MorpheAnimations.expandHorizFadeIn,
-                    exit = MorpheAnimations.shrinkHorizFadeOut
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     GlassChip(
-                        text = stringResource(R.string.update),
-                        icon = Icons.Outlined.ArrowUpward
+                        modifier = if (isAppDeleted) Modifier.weight(1f, fill = false) else Modifier,
+                        text = versionChipText,
+                        icon = Icons.Outlined.CheckCircle
                     )
+
+                    if (isAppDeleted) {
+                        GlassChip(
+                            text = deletedLabel,
+                            icon = Icons.Outlined.DeleteOutline,
+                            containerColor = deletedContainerColor,
+                            contentColor = deletedContentColor
+                        )
+                    }
+                }
+
+                if (showUpgradeChip) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GlassChip(
+                            text = upgradeChipText.orEmpty(),
+                            icon = Icons.Outlined.ArrowUpward
+                        )
+                    }
+                }
+
+                if (showExperimentalChip) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GlassChip(
+                            text = experimentalChipText.orEmpty(),
+                            icon = Icons.Outlined.Science
+                        )
+                    }
                 }
             }
         }
     }
 }
+
+private fun versionWithPrefix(version: String): String =
+    if (version.isBlank() || version.startsWith("v", ignoreCase = true)) version else "v$version"
 
 /**
  * App button with gradient background.
@@ -366,6 +453,7 @@ fun AppButton(
             displayName = displayName,
             subtitle = notPatchedText,
             gradientColors = gradientColors,
+            subtitleIcon = Icons.Outlined.Extension
         )
     }
 }
@@ -388,6 +476,7 @@ internal fun AppCardLayout(
     enabled: Boolean,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
+    cardHeight: Dp? = null,
     content: @Composable RowScope.() -> Unit
 ) {
     val cardStyle = homeAppCardStyle()
@@ -418,7 +507,7 @@ internal fun AppCardLayout(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(cardStyle.cardHeight)
+            .height(cardHeight ?: cardStyle.cardHeight)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(shape)
             .drawWithContent {

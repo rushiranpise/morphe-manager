@@ -1207,11 +1207,14 @@ class HomeViewModel(
                 }
             }
         },
-        _appUpdatesAvailable,
+        combine(_appUpdatesAvailable, compatibleVersionsFlow) { updatesMap, compatibleVersions ->
+            updatesMap to compatibleVersions
+        },
         _appStateTicker,
-    ) { bundleState, homePrefs, installedApps, updatesMap, _ ->
+    ) { bundleState, homePrefs, installedApps, versionData, _ ->
         val ready = bundleState as? PatchBundleRepository.BundleState.Ready
             ?: return@combine null
+        val (updatesMap, compatibleVersions) = versionData
 
         val enabledInfo = ready.info.filter { (_, info) -> info.enabled }
         val metadata = BundleAppMetadata.buildFrom(enabledInfo)
@@ -1250,6 +1253,21 @@ class HomeViewModel(
             val hasUpdate = installedApp?.let {
                 updatesMap[it.currentPackageName] == true
             } == true
+            val installedVersion = installedApp?.version?.takeIf { it.isNotBlank() }
+                ?: resolvedData.version?.takeIf { it.isNotBlank() }
+                ?: resolvedData.packageInfo?.versionName?.takeIf { it.isNotBlank() }
+            val supportedTargets = compatibleVersions[packageName]
+                .orEmpty()
+                .map { it.target }
+                .filter { target ->
+                    target.version != null && (target.minSdk == null || Build.VERSION.SDK_INT >= target.minSdk!!)
+                }
+            val latestStableVersion = supportedTargets
+                .filterNot { it.isExperimental }
+                .latestVersion()
+            val latestExperimentalVersion = supportedTargets
+                .filter { it.isExperimental }
+                .latestVersion()
             return HomeAppItem(
                 packageName = packageName,
                 displayName = displayName,
@@ -1261,6 +1279,9 @@ class HomeViewModel(
                 isDeleted = isDeleted,
                 hasSavedCopy = hasSavedCopy,
                 hasUpdate = hasUpdate,
+                upgradeVersion = latestStableVersion
+                    ?.takeIf { hasUpdate && isNewerVersion(installedVersion, it) },
+                experimentalVersion = latestExperimentalVersion,
                 patchCount = 0
             )
         }
@@ -1404,6 +1425,10 @@ class HomeViewModel(
             )
         }
     }
+
+    private fun List<AppTarget>.latestVersion(): String? =
+        maxWithOrNull { first, second -> compareVersions(first.version, second.version) }
+            ?.version
 
     /**
      * Resets the swipe gesture hint after it has been shown.
