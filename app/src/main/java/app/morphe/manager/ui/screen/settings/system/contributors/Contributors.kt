@@ -6,16 +6,18 @@
 package app.morphe.manager.ui.screen.settings.system.contributors
 
 import android.content.Context
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DeveloperMode
-import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.Build
+import androidx.compose.material.icons.outlined.DesktopWindows
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Terminal
-import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import app.morphe.manager.BuildConfig
@@ -40,35 +41,14 @@ import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.Locale
-
-/**
- * Which part of the project a contributor's commits actually touched.
- *
- * The wall shows a few of these as badges, and they double as the wording of the person's summary,
- * so a badge and a sentence can never disagree. They are not a claim about what someone can do -
- * they are read off the paths their commits changed, by `ci/update-contributors.py`.
- */
-internal enum class ContributionArea(
-    @StringRes val labelRes: Int,
-    val icon: ImageVector,
-    val tint: Color
-) {
-    APP(R.string.contributor_area_app, Icons.Outlined.PhoneAndroid, Color(0xFF3DDC84)),
-    SERVER(R.string.contributor_area_server, Icons.Outlined.Dns, Color(0xFF4C8DFF)),
-    ADB(R.string.contributor_area_adb, Icons.Outlined.Terminal, Color(0xFFB388FF)),
-    BUILD(R.string.contributor_area_build, Icons.Outlined.DeveloperMode, Color(0xFFF9A825)),
-    I18N(R.string.contributor_area_i18n, Icons.Outlined.Translate, Color(0xFFEF6C00)),
-    DOCS(R.string.contributor_area_docs, Icons.Outlined.MenuBook, Color(0xFF26A69A))
-}
 
 /**
  * Someone credited on the wall.
  *
- * [login] and [avatarUrl] come from the GitHub account behind a commit identity, where there is
- * one. Neither is guessed - the obvious guess for one contributor now belongs to a different
- * person, and a credit that opens a stranger's profile is worse than a credit with no link - so
- * where there is no account the wall draws the person's initial instead.
+ * [login] and [avatarUrl] come from the GitHub account itself; the account is the identity, so the
+ * same person contributing to several repositories is one face, counted once. [projects] are the
+ * repositories they worked in, most-contributed first, and are read off the organisation's own
+ * repositories rather than typed anywhere.
  *
  * The picture is the account's own, at the URL it lives at; nothing is carried in the app, so what
  * is drawn is whatever that person is using now rather than a copy from whenever the credits were
@@ -79,21 +59,68 @@ internal data class Contributor(
     val login: String?,
     val commits: Int,
     val avatarUrl: String?,
-    val areas: List<ContributionArea>,
-    /** BCP-47 tags, and only for someone whose work is mostly translation. */
-    val languages: List<String>
+    /** Repository keys, e.g. `patches` for `morphe-patches`. */
+    val projects: List<String>
 ) {
     val profileUrl: String? get() = login?.let { "https://github.com/$it" }
 }
 
 /**
+ * What a project key is called on screen.
+ *
+ * Composed from the key, so a repository the organisation adds tomorrow is named without a string
+ * of its own. The few names that title-casing would mangle - an acronym, or a name that keeps its
+ * own capitalisation - are given here instead.
+ */
+internal fun projectDisplayName(key: String): String =
+    ProjectNameOverrides[key] ?: key.split('-', '_')
+        .filter { it.isNotEmpty() }
+        .joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+
+private val ProjectNameOverrides = mapOf(
+    "microg-re" to "MicroG-RE",
+    "arsclib" to "ARSCLib",
+    "jadb" to "jadb",
+    "smali" to "smali",
+    "multidexlib2" to "multidexlib2",
+    "nowinandroid" to "Now in Android",
+    "pothelper" to "PotHelper"
+)
+
+/** A glyph to recognise a project by; anything unrecognised gets a folder rather than nothing. */
+internal fun projectIcon(key: String): ImageVector = when (key) {
+    "manager" -> Icons.Outlined.PhoneAndroid
+    "patches" -> Icons.Outlined.Extension
+    "patcher" -> Icons.Outlined.Build
+    "website" -> Icons.Outlined.Language
+    "documentation", "library" -> Icons.Outlined.MenuBook
+    "desktop" -> Icons.Outlined.DesktopWindows
+    "branding" -> Icons.Outlined.Palette
+    "jadb" -> Icons.Outlined.Terminal
+    else -> Icons.Outlined.Folder
+}
+
+/** A color to tell projects apart at a glance; the fallback stays neutral. */
+internal fun projectTint(key: String): Color = when (key) {
+    "manager" -> Color(0xFF3DDC84)
+    "patches" -> Color(0xFF4C8DFF)
+    "patcher" -> Color(0xFFB388FF)
+    "website" -> Color(0xFFEF6C00)
+    "documentation", "library" -> Color(0xFF26A69A)
+    "desktop" -> Color(0xFFF9A825)
+    "branding" -> Color(0xFFEC407A)
+    "jadb" -> Color(0xFF7E57C2)
+    else -> Color(0xFF90A4AE)
+}
+
+/**
  * The credits snapshot, and how it is kept current.
  *
- * The file is generated from this repository's history by `ci/update-contributors.py` and published
- * to a data branch by the contributors workflow, so the wall follows the repository without needing
- * a release: a new contributor shows up on their own. Three copies are in play, in order of
- * preference - the fetched copy, the last one fetched, and the one shipped in the APK - and a
- * failure at any step simply falls back to the next, because a credits screen is never worth
+ * The file is generated from the organisation's repositories by `ci/update-contributors.py` and
+ * published to a data branch by the contributors workflow, so the wall follows the organisation
+ * without needing a release: a new contributor shows up on their own. Three copies are in play, in
+ * order of preference - the fetched copy, the last one fetched, and the one shipped in the APK -
+ * and a failure at any step simply falls back to the next, because a credits screen is never worth
  * failing over.
  */
 internal object ContributorCredits {
@@ -189,8 +216,8 @@ internal object ContributorCredits {
 /**
  * Read a snapshot.
  *
- * Unknown area names are dropped rather than treated as an error, so a newer snapshot that adds one
- * still renders on an older app instead of taking the wall down with it.
+ * Unknown project keys are kept rather than dropped: a project is whatever the generator found, and
+ * an app that has never heard of one still owes the person the credit.
  */
 internal fun parseContributors(payload: String): List<Contributor> {
     val array = JSONObject(payload).optJSONArray("contributors") ?: return emptyList()
@@ -200,19 +227,13 @@ internal fun parseContributors(payload: String): List<Contributor> {
             val item = array.optJSONObject(index) ?: continue
             val name = item.optionalText("name") ?: continue
 
-            val areas = item.optJSONArray("areas").toStringList().mapNotNull { key ->
-                ContributionArea.entries.firstOrNull { it.name == key }
-            }
-            val languages = item.optJSONArray("languages").toStringList()
-
             add(
                 Contributor(
                     name = name,
                     login = item.optionalText("login"),
                     commits = item.optInt("commits"),
                     avatarUrl = item.optionalText("avatarUrl"),
-                    areas = areas,
-                    languages = languages
+                    projects = item.optJSONArray("projects").toStringList()
                 )
             )
         }
@@ -223,9 +244,8 @@ internal fun parseContributors(payload: String): List<Contributor> {
  * A text field of the snapshot, or null where the generator wrote a null.
  *
  * Not `optString`: Android answers a JSON null with the *word* "null", which is then a value
- * everywhere it is used - every contributor without a bundled picture was cached under one key
- * made of that word, so the first of them was drawn for all of them, and one without an account
- * was offered a link to github.com/null.
+ * everywhere it is used - a contributor without a picture would be offered a link to
+ * github.com/null, and every one of them would share a cache entry.
  */
 private fun JSONObject.optionalText(key: String): String? {
     if (isNull(key)) return null
@@ -293,23 +313,17 @@ internal fun ContributorWallSection(modifier: Modifier = Modifier) {
 /**
  * What to say about a contributor, composed from what the generator found.
  *
- * Prose built out of data rather than a sentence per person, so a new contributor is described the
- * moment the generator sees them and there is no list of strings to keep in step with the list of
- * people. The language names come from the platform, which means they are already written in the
- * reader's own language and need no translation of their own.
+ * A sentence built out of the projects rather than one per person, so a new contributor is
+ * described the moment the generator sees them and there is no list of strings to keep in step
+ * with the list of people.
  */
 @Composable
 internal fun contributorSummary(contributor: Contributor): String {
-    val locale = LocalConfiguration.current.locales[0]
-    val areas = contributor.areas.map { stringResource(it.labelRes) }.joinToString(", ")
-    val languages = contributor.languages
-        .map { Locale.forLanguageTag(it).getDisplayName(locale) }
-        .joinToString(", ")
+    val projects = contributor.projects.map { projectDisplayName(it) }.joinToString(", ")
 
-    return when {
-        languages.isEmpty() && areas.isEmpty() -> stringResource(R.string.contributor_summary_default)
-        languages.isEmpty() -> stringResource(R.string.contributor_summary_code, areas)
-        areas.isEmpty() -> stringResource(R.string.contributor_summary_translations, languages)
-        else -> stringResource(R.string.contributor_summary_code_translations, areas, languages)
+    return if (projects.isEmpty()) {
+        stringResource(R.string.contributor_summary_default)
+    } else {
+        stringResource(R.string.contributor_summary_projects, projects)
     }
 }

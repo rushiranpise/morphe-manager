@@ -32,11 +32,8 @@ jobs:
   snapshot:
     runs-on: ubuntu-latest
     steps:
+      # Only the checkout date is read from git; everything else comes from the GitHub API.
       - uses: actions/checkout@v4
-        with:
-          # The credits are read off the whole history, so a shallow clone would only ever see the
-          # commits since the last tag.
-          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -44,9 +41,10 @@ jobs:
 
       - name: Generate the snapshot
         env:
-          # Used to resolve which GitHub account each commit email belongs to.
+          # The whole organisation is read, not just this checkout: every maintained repository's
+          # contributors, deduplicated by account.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python ci/update-contributors.py --out "$RUNNER_TEMP/contributors.json"
+        run: python ci/update-contributors.py --org MorpheApp --out "$RUNNER_TEMP/contributors.json"
 
       - name: Publish to the data branch
         run: |

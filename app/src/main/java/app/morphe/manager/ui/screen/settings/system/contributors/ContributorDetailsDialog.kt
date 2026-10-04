@@ -112,13 +112,13 @@ internal fun ContributorDetailsDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                if (contributor.areas.isNotEmpty()) {
+                if (contributor.projects.isNotEmpty()) {
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        contributor.areas.forEach { ContributionChip(it) }
+                        contributor.projects.forEach { ContributionChip(it) }
                     }
                 }
             }
@@ -152,8 +152,9 @@ internal fun ContributorDetailsDialog(
     )
 }
 
+/** One project a person worked in, named from its own key. */
 @Composable
-private fun ContributionChip(area: ContributionArea) {
+private fun ContributionChip(project: String) {
     Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHighest) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -161,13 +162,13 @@ private fun ContributionChip(area: ContributionArea) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = area.icon,
+                imageVector = projectIcon(project),
                 contentDescription = null,
-                tint = area.tint,
+                tint = projectTint(project),
                 modifier = Modifier.size(18.dp)
             )
             Text(
-                text = stringResource(area.labelRes),
+                text = projectDisplayName(project),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

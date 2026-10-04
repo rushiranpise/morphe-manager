@@ -1,217 +1,1062 @@
 {
   "generated": "2026-10-03",
+  "org": "MorpheApp",
   "contributors": [
-    {
-      "name": "MarcaDian",
-      "login": "MarcaDian",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/152095496?v=4",
-      "commits": 1016,
-      "areas": [
-        "APP",
-        "DOCS",
-        "I18N"
-      ],
-      "languages": []
-    },
     {
       "name": "LisoUseInAIKyrios",
       "login": "LisoUseInAIKyrios",
       "avatarUrl": "https://avatars.githubusercontent.com/u/118716522?v=4",
-      "commits": 231,
-      "areas": [
-        "APP",
-        "BUILD",
-        "DOCS"
-      ],
-      "languages": []
+      "commits": 1851,
+      "projects": [
+        "patches",
+        "manager",
+        "website"
+      ]
     },
     {
-      "name": "Rushi Ranpise",
-      "login": "rushiranpise",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/37355997?v=4",
-      "commits": 19,
-      "areas": [
-        "APP",
-        "BUILD",
-        "DOCS"
-      ],
-      "languages": []
+      "name": "MarcaDian",
+      "login": "MarcaDian",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/152095496?v=4",
+      "commits": 1351,
+      "projects": [
+        "manager",
+        "patches",
+        "website"
+      ]
     },
     {
-      "name": "abemurica",
-      "login": "abemurica",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/2017096?v=4",
-      "commits": 12,
-      "areas": [
-        "APP",
-        "BUILD"
-      ],
-      "languages": []
+      "name": "ILoveOpenSourceApplications",
+      "login": "ILoveOpenSourceApplications",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/117499019?v=4",
+      "commits": 224,
+      "projects": [
+        "patches",
+        "patches-library"
+      ]
     },
     {
-      "name": "Eric Ahn",
-      "login": "wchill",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/3746651?v=4",
-      "commits": 8,
-      "areas": [
-        "BUILD",
-        "APP"
-      ],
-      "languages": []
+      "name": "Samuel Carlsson",
+      "login": "vidstige",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/655605?v=4",
+      "commits": 178,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "0xrxL",
+      "login": "0xrxL",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/127248639?v=4",
+      "commits": 170,
+      "projects": [
+        "patches",
+        "microg-re",
+        "patches-library"
+      ]
     },
     {
       "name": "inotia00",
       "login": "inotia00",
       "avatarUrl": "https://avatars.githubusercontent.com/u/108592928?v=4",
+      "commits": 144,
+      "projects": [
+        "patches",
+        "apktool",
+        "manager"
+      ]
+    },
+    {
+      "name": "Eric Ahn",
+      "login": "wchill",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3746651?v=4",
+      "commits": 114,
+      "projects": [
+        "patcher",
+        "patches-library",
+        "patches-gradle-plugin"
+      ]
+    },
+    {
+      "name": "Rushi Ranpise",
+      "login": "rushiranpise",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/37355997?v=4",
+      "commits": 109,
+      "projects": [
+        "microg-re",
+        "manager",
+        "patches"
+      ]
+    },
+    {
+      "name": "Lanchon",
+      "login": "Lanchon",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3977813?v=4",
+      "commits": 101,
+      "projects": [
+        "multidexlib2"
+      ]
+    },
+    {
+      "name": "krvstek.",
+      "login": "krvstek",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/138402769?v=4",
+      "commits": 60,
+      "projects": [
+        "desktop",
+        "patches",
+        "website"
+      ]
+    },
+    {
+      "name": "Jano Svitok",
+      "login": "janosvitok",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/2714054?v=4",
+      "commits": 49,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Prateek",
+      "login": "prateek-who",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/129204458?v=4",
+      "commits": 47,
+      "projects": [
+        "desktop",
+        "patcher"
+      ]
+    },
+    {
+      "name": "MrHard",
+      "login": "mrhard9090",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/74858909?v=4",
+      "commits": 42,
+      "projects": [
+        "patches",
+        "patcher"
+      ]
+    },
+    {
+      "name": "Art",
+      "login": "SKART1",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3259560?v=4",
+      "commits": 32,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "MOHAMMADAMIN TOGHIPOUR",
+      "login": "Moltrax8",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/249062615?v=4",
+      "commits": 24,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "rotundtapir",
+      "login": "rotundtapir",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/290189007?v=4",
+      "commits": 19,
+      "projects": [
+        "patcher",
+        "manager",
+        "patches"
+      ]
+    },
+    {
+      "name": "hoodles",
+      "login": "hoo-dles",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/207470673?v=4",
+      "commits": 14,
+      "projects": [
+        "jadb",
+        "microg-re",
+        "library"
+      ]
+    },
+    {
+      "name": "ぎむざ",
+      "login": "Giemsa",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3933508?v=4",
+      "commits": 13,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "oSumAtrIX",
+      "login": "oSumAtrIX",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/13122796?v=4",
+      "commits": 10,
+      "projects": [
+        "multidexlib2",
+        "microg-re"
+      ]
+    },
+    {
+      "name": "brosssh",
+      "login": "brosssh",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/44944126?v=4",
+      "commits": 9,
+      "projects": [
+        "patches-template",
+        "patcher",
+        "patches"
+      ]
+    },
+    {
+      "name": "Hoàng Gia Bảo",
+      "login": "fromhgbwithluv",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/70064328?v=4",
+      "commits": 9,
+      "projects": [
+        "microg-re",
+        "patches"
+      ]
+    },
+    {
+      "name": "Manan Chovatia",
+      "login": "PaN1C27",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/65569502?v=4",
+      "commits": 9,
+      "projects": [
+        "patches",
+        "patches-library"
+      ]
+    },
+    {
+      "name": "AAMATT",
+      "login": "AAMATT",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/130586233?v=4",
+      "commits": 8,
+      "projects": [
+        "documentation",
+        "patches",
+        "branding"
+      ]
+    },
+    {
+      "name": "BingoKingo",
+      "login": "BingoKingo",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/24961267?v=4",
       "commits": 7,
-      "areas": [
-        "BUILD",
-        "APP",
-        "DOCS"
-      ],
-      "languages": []
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "abemurica",
+      "login": "abemurica",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/2017096?v=4",
+      "commits": 6,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "ann9cht",
+      "login": "ann9cht",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/90591960?v=4",
+      "commits": 6,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "Dan",
+      "login": "dllewellyn",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/12224340?v=4",
+      "commits": 6,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "FlaminSarge",
+      "login": "FlaminSarge",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/2764675?v=4",
+      "commits": 6,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "gajera1080",
+      "login": "gajera1080",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/223938674?v=4",
+      "commits": 6,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "root-intruder",
+      "login": "root-intruder",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/58737722?v=4",
+      "commits": 6,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Gergő Törcsvári",
+      "login": "tg44",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/31839?v=4",
+      "commits": 5,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "kitadai31",
+      "login": "kitadai31",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/90122968?v=4",
+      "commits": 5,
+      "projects": [
+        "patches",
+        "manager",
+        "patches-gradle-plugin"
+      ]
+    },
+    {
+      "name": "naijun0403",
+      "login": "naijun0403",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/101266316?v=4",
+      "commits": 5,
+      "projects": [
+        "patches",
+        "website"
+      ]
+    },
+    {
+      "name": "pharmacomaniac",
+      "login": "zappybiby",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/15076478?v=4",
+      "commits": 5,
+      "projects": [
+        "patches",
+        "desktop"
+      ]
+    },
+    {
+      "name": "VazerOG",
+      "login": "VazerOG",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/73250534?v=4",
+      "commits": 5,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "vsvoice",
+      "login": "vsvoice",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/42605695?v=4",
+      "commits": 5,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "actions-user",
+      "login": "actions-user",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/65916846?v=4",
+      "commits": 4,
+      "projects": [
+        "jadb"
+      ]
     },
     {
       "name": "Andrea Covelli",
       "login": "AndreaCovelli",
       "avatarUrl": "https://avatars.githubusercontent.com/u/34921854?v=4",
       "commits": 4,
-      "areas": [
-        "APP",
-        "BUILD"
-      ],
-      "languages": []
+      "projects": [
+        "manager"
+      ]
     },
     {
-      "name": "Nikhil",
-      "login": "Nickhasntlost",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/177347257?v=4",
-      "commits": 2,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
-    },
-    {
-      "name": "rotundtapir",
-      "login": "rotundtapir",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/290189007?v=4",
-      "commits": 2,
-      "areas": [
-        "BUILD",
-        "APP"
-      ],
-      "languages": []
+      "name": "Angel",
+      "login": "schema56",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/250420973?v=4",
+      "commits": 4,
+      "projects": [
+        "patcher"
+      ]
     },
     {
       "name": "BlackGold8282",
       "login": "BlackGold8282",
       "avatarUrl": "https://avatars.githubusercontent.com/u/187422855?v=4",
-      "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "commits": 4,
+      "projects": [
+        "website",
+        "manager",
+        "patches"
+      ]
     },
     {
       "name": "Coby",
       "login": "KobeW50",
       "avatarUrl": "https://avatars.githubusercontent.com/u/84587632?v=4",
-      "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "commits": 4,
+      "projects": [
+        "documentation",
+        "library",
+        "manager"
+      ]
+    },
+    {
+      "name": "colbyashilewis11",
+      "login": "colbyashilewis11",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/127793053?v=4",
+      "commits": 4,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "Jia Chen",
+      "login": "fashioncj",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/4254860?v=4",
+      "commits": 4,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Muhammad Ikhsan",
+      "login": "muhikhsan101",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/7415985?v=4",
+      "commits": 4,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "anthonyflynn",
+      "login": "anthonyflynn",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/12533992?v=4",
+      "commits": 3,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Copilot",
+      "login": "Copilot",
+      "avatarUrl": "https://avatars.githubusercontent.com/in/1143301?v=4",
+      "commits": 3,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "danielfriederich",
+      "login": "danielfriederich",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/11235933?v=4",
+      "commits": 3,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Luke Quinane",
+      "login": "tmyroadctfig",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/855586?v=4",
+      "commits": 3,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Nikhil",
+      "login": "Nickhasntlost",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/177347257?v=4",
+      "commits": 3,
+      "projects": [
+        "manager",
+        "website"
+      ]
+    },
+    {
+      "name": "Sander",
+      "login": "smieras",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/7536682?v=4",
+      "commits": 3,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Aleksandr",
+      "login": "Vertuhai",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/136680660?v=4",
+      "commits": 2,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "armdebug",
+      "login": "armdebug",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/100161001?v=4",
+      "commits": 2,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "cfig",
+      "login": "cfig",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1133314?v=4",
+      "commits": 2,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Chethan",
+      "login": "ch3thanhs",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/76928501?v=4",
+      "commits": 2,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "ComoEstaisAmigos",
+      "login": "ComoEstaisAmigos",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/321576929?v=4",
+      "commits": 2,
+      "projects": [
+        "patcher"
+      ]
     },
     {
       "name": "Dimitris Chatzis",
       "login": "dhtzs",
       "avatarUrl": "https://avatars.githubusercontent.com/u/12586834?v=4",
-      "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "commits": 2,
+      "projects": [
+        "manager",
+        "patches"
+      ]
     },
     {
-      "name": "Jaival",
-      "login": "jaival-11",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/251092232?v=4",
-      "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "name": "Donny Kurnia",
+      "login": "donnykurnia",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/95402?v=4",
+      "commits": 2,
+      "projects": [
+        "desktop"
+      ]
     },
     {
-      "name": "Kofua",
-      "login": "zjns",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/10793522?v=4",
-      "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "name": "Galaxy",
+      "login": "GalaxyXYZ888",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/83467159?v=4",
+      "commits": 2,
+      "projects": [
+        "patches"
+      ]
     },
     {
-      "name": "Lorenzo Ganzella",
-      "login": "GanzellaLorenzo",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/187826402?v=4",
-      "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "name": "GuysLetsPlay",
+      "login": "GuysLetsPlay",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/71846152?v=4",
+      "commits": 2,
+      "projects": [
+        "patches"
+      ]
     },
     {
-      "name": "Max",
-      "login": "kondratjev",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/39211385?v=4",
-      "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "name": "nullptr",
+      "login": "johnconner122",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/107796137?v=4",
+      "commits": 2,
+      "projects": [
+        "patcher",
+        "patches"
+      ]
     },
     {
-      "name": "SehrGuterCode",
-      "login": "SehrGuterCode",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/101972908?v=4",
-      "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "name": "Pelotrio",
+      "login": "Pelotrio",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/45769595?v=4",
+      "commits": 2,
+      "projects": [
+        "patcher"
+      ]
     },
     {
-      "name": "Victor Irzak",
-      "login": "virzak",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/6209775?v=4",
+      "name": "phantamanta44",
+      "login": "phantamanta44",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/5924141?v=4",
+      "commits": 2,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Uğur Tafralı",
+      "login": "utafrali",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/8383373?v=4",
+      "commits": 2,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Zaid AlAsali",
+      "login": "ZaidNAlAsali",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/126499988?v=4",
+      "commits": 2,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "Aboody",
+      "login": "AboodFares",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/195588862?v=4",
       "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Agent Kostička",
+      "login": "AgentKosticka",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/79516204?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Anderson Lucas C. Ramos",
+      "login": "andersonlucasg3",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1627653?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "André",
+      "login": "JMarques1196",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/64154960?v=4",
+      "commits": 1,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "Bearmancer",
+      "login": "Bearmancer",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/70022442?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "btraas",
+      "login": "btraas",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/12105355?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
     },
     {
       "name": "clearpath-mind",
       "login": "clearpath-mind",
       "avatarUrl": "https://avatars.githubusercontent.com/u/273886491?v=4",
       "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "projects": [
+        "manager"
+      ]
     },
     {
-      "name": "kitadai31",
-      "login": "kitadai31",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/90122968?v=4",
+      "name": "Eyuel Abiyot",
+      "login": "Eyuleo",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/92599318?v=4",
       "commits": 1,
-      "areas": [
-        "APP"
-      ],
-      "languages": []
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "Flarette",
+      "login": "Flarette",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/92332304?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "George Pantazes",
+      "login": "gwpantazes",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/797406?v=4",
+      "commits": 1,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "GoldRift",
+      "login": "GoldRift",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/69951941?v=4",
+      "commits": 1,
+      "projects": [
+        "documentation"
+      ]
+    },
+    {
+      "name": "Hitesh Deswal",
+      "login": "DarkenVamp",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/28810252?v=4",
+      "commits": 1,
+      "projects": [
+        "patches-template"
+      ]
+    },
+    {
+      "name": "Jacob Bundgaard",
+      "login": "kimsey0",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/984760?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Jaival",
+      "login": "jaival-11",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/251092232?v=4",
+      "commits": 1,
+      "projects": [
+        "manager"
+      ]
+    },
+    {
+      "name": "Jeremy Valenzuela",
+      "login": "jevalen4868",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/9815617?v=4",
+      "commits": 1,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "js6pak",
+      "login": "js6pak",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/35262707?v=4",
+      "commits": 1,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Kofua",
+      "login": "zjns",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/10793522?v=4",
+      "commits": 1,
+      "projects": [
+        "manager"
+      ]
+    },
+    {
+      "name": "Kyo様",
+      "login": "kyoyacchi",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/63583961?v=4",
+      "commits": 1,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "Lorenzo Ganzella",
+      "login": "GanzellaLorenzo",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/187826402?v=4",
+      "commits": 1,
+      "projects": [
+        "manager"
+      ]
+    },
+    {
+      "name": "Lui22",
+      "login": "Lui22",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/30185757?v=4",
+      "commits": 1,
+      "projects": [
+        "desktop"
+      ]
+    },
+    {
+      "name": "Luky_cz",
+      "login": "Lukycz9876",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/240768426?v=4",
+      "commits": 1,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "makhlwf",
+      "login": "makhlwf",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/78276231?v=4",
+      "commits": 1,
+      "projects": [
+        "website"
+      ]
+    },
+    {
+      "name": "Matt Van Horn",
+      "login": "mvanhorn",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/455140?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Max",
+      "login": "kondratjev",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/39211385?v=4",
+      "commits": 1,
+      "projects": [
+        "manager"
+      ]
+    },
+    {
+      "name": "Mhcp",
+      "login": "mhcp00",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/304757533?v=4",
+      "commits": 1,
+      "projects": [
+        "patches-template"
+      ]
+    },
+    {
+      "name": "noamtu123",
+      "login": "noamtu123",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/171730897?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Oliver Leung",
+      "login": "oliver-leung",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/13292691?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Prathxm",
+      "login": "PrathxmOp",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/185752095?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Pupy200mine",
+      "login": "Pupy200mine",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/91564635?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "ragavpr",
+      "login": "ragavpr",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/39620234?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Raimund Hocke",
+      "login": "RaiMan",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/586370?v=4",
+      "commits": 1,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Sahaj",
+      "login": "sahajsaboo",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/85354130?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Samuele Riccardi",
+      "login": "riccardi-samuele",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/95140231?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Santiago Castro",
+      "login": "bryant1410",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3905501?v=4",
+      "commits": 1,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "Santodan",
+      "login": "Santodan",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/25581907?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Scalee",
+      "login": "Scalee",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1917337?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Sculas",
+      "login": "Sculas",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/22832313?v=4",
+      "commits": 1,
+      "projects": [
+        "jadb"
+      ]
+    },
+    {
+      "name": "SehrGuterCode",
+      "login": "SehrGuterCode",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/101972908?v=4",
+      "commits": 1,
+      "projects": [
+        "manager"
+      ]
+    },
+    {
+      "name": "spzla",
+      "login": "spzla",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/57840318?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "T1nG3R",
+      "login": "T1nG3R",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/46874273?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "Tejas Attarde",
+      "login": "tejas-ae",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/201814263?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "tutahackerzzz",
+      "login": "tutahackerzzz",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/280950441?v=4",
+      "commits": 1,
+      "projects": [
+        "documentation"
+      ]
+    },
+    {
+      "name": "Vaibhav Manihar",
+      "login": "Vai-Man",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/145927299?v=4",
+      "commits": 1,
+      "projects": [
+        "documentation"
+      ]
+    },
+    {
+      "name": "valonso",
+      "login": "valonsodev",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/80985309?v=4",
+      "commits": 1,
+      "projects": [
+        "patcher"
+      ]
+    },
+    {
+      "name": "Varnit Singh",
+      "login": "EncryptedCicada",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/52757733?v=4",
+      "commits": 1,
+      "projects": [
+        "documentation"
+      ]
+    },
+    {
+      "name": "Victor Irzak",
+      "login": "virzak",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/6209775?v=4",
+      "commits": 1,
+      "projects": [
+        "manager"
+      ]
+    },
+    {
+      "name": "waifucon",
+      "login": "waifucon",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/79400634?v=4",
+      "commits": 1,
+      "projects": [
+        "desktop"
+      ]
+    },
+    {
+      "name": "Çağlar Eker",
+      "login": "caglareker",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/20927272?v=4",
+      "commits": 1,
+      "projects": [
+        "patches"
+      ]
+    },
+    {
+      "name": "旋風之音 GoneTone",
+      "login": "GoneTone",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/10025956?v=4",
+      "commits": 1,
+      "projects": [
+        "website"
+      ]
     }
   ]
 }

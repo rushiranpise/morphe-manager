@@ -15,13 +15,13 @@ import kotlin.test.*
 class ContributorsTest {
 
     private fun snapshot(vararg entries: String) =
-        """{"generated":"2026-10-03","contributors":[${entries.joinToString(",")}]}"""
+        """{"org":"MorpheApp","generated":"2026-10-03","contributors":[${entries.joinToString(",")}]}"""
 
     @Test
-    fun `snapshot is parsed with areas and languages`() {
+    fun `snapshot is parsed with its projects`() {
         val parsed = parseContributors(
             snapshot(
-                """{"name":"Someone","login":"someone","avatarUrl":"https://x/y.png","commits":12,"areas":["APP","DOCS"],"languages":["fr"]}"""
+                """{"name":"Someone","login":"someone","avatarUrl":"https://x/y.png","commits":12,"projects":["patches","manager"]}"""
             )
         )
 
@@ -30,24 +30,23 @@ class ContributorsTest {
         assertEquals("Someone", who.name)
         assertEquals("someone", who.login)
         assertEquals(12, who.commits)
-        assertEquals(listOf(ContributionArea.APP, ContributionArea.DOCS), who.areas)
-        assertEquals(listOf("fr"), who.languages)
+        assertEquals(listOf("patches", "manager"), who.projects)
         assertEquals("https://github.com/someone", who.profileUrl)
     }
 
     @Test
-    fun `unknown area names are dropped, not fatal`() {
+    fun `an unknown project is kept, not dropped`() {
         val parsed = parseContributors(
-            snapshot("""{"name":"Someone","commits":1,"areas":["APP","MADE_UP"],"languages":[]}""")
+            snapshot("""{"name":"Someone","commits":1,"projects":["patches","a-new-repo"]}""")
         )
-        assertEquals(listOf(ContributionArea.APP), parsed.single().areas)
+        assertEquals(listOf("patches", "a-new-repo"), parsed.single().projects)
     }
 
     @Test
     fun `a null field is null and not the word null`() {
         // Android's org.json answers a JSON null with the literal word, which would become a value
         val parsed = parseContributors(
-            snapshot("""{"name":"NoAccount","login":null,"avatarUrl":null,"commits":3,"areas":[],"languages":[]}""")
+            snapshot("""{"name":"NoAccount","login":null,"avatarUrl":null,"commits":3,"projects":[]}""")
         )
         val who = parsed.single()
         assertNull(who.login)
@@ -60,7 +59,7 @@ class ContributorsTest {
         val parsed = parseContributors(
             snapshot(
                 """{"login":"ghost","commits":5}""",
-                """{"name":"Real","commits":1,"areas":[],"languages":[]}"""
+                """{"name":"Real","commits":1,"projects":[]}"""
             )
         )
         assertEquals(listOf("Real"), parsed.map { it.name })
@@ -76,6 +75,20 @@ class ContributorsTest {
         // Every call site wraps the parse in runCatching and falls back to the next copy, so a
         // corrupt download can never take the wall down with it.
         assertNull(runCatching { parseContributors("not json") }.getOrNull())
+    }
+
+    @Test
+    fun `a project key reads as its own name`() {
+        assertEquals("Manager", projectDisplayName("manager"))
+        assertEquals("Patches Gradle Plugin", projectDisplayName("patches-gradle-plugin"))
+        assertEquals("Patches Library", projectDisplayName("patches-library"))
+    }
+
+    @Test
+    fun `a name title-casing would mangle keeps its own form`() {
+        assertEquals("MicroG-RE", projectDisplayName("microg-re"))
+        assertEquals("ARSCLib", projectDisplayName("arsclib"))
+        assertEquals("jadb", projectDisplayName("jadb"))
     }
 
     @Test
@@ -110,8 +123,8 @@ class ContributorsTest {
 
     @Test
     fun `avatar cache key separates two people without a picture`() {
-        val one = Contributor("Ada", null, 1, null, emptyList(), emptyList())
-        val two = Contributor("Grace", null, 1, null, emptyList(), emptyList())
+        val one = Contributor("Ada", null, 1, null, emptyList())
+        val two = Contributor("Grace", null, 1, null, emptyList())
         assertNotEquals(
             ContributorAvatars.cacheKey(one, 64),
             ContributorAvatars.cacheKey(two, 64)

@@ -1261,20 +1261,11 @@ Details: %2$s"</string>
     </plurals>
     <string name="contributor_view_github">View on GitHub</string>
     <string name="contributor_details_close">Close</string>
-    <!-- Which part of the project a contributor's commits touched, shown as a badge. -->
-    <string name="contributor_area_app">App</string>
-    <string name="contributor_area_server">Server</string>
-    <string name="contributor_area_adb">ADB</string>
-    <string name="contributor_area_build">Build</string>
-    <string name="contributor_area_i18n">Translations</string>
-    <string name="contributor_area_docs">Docs</string>
     <!--
-      A contributor's summary is composed from what the credits generator found - the areas they
-      worked on and the languages they translated - so no wording is written per person.
+      A contributor's summary is composed from the projects the credits generator found them in,
+      so no wording is written per person, and %1$s is a list of project names.
     -->
-    <string name="contributor_summary_code">Worked on %1$s.</string>
-    <string name="contributor_summary_translations">Translated the app into %1$s.</string>
-    <string name="contributor_summary_code_translations">Worked on %1$s, and translated the app into %2$s.</string>
+    <string name="contributor_summary_projects">Contributed to %1$s.</string>
     <string name="contributor_summary_default">Contributor</string>
 
     <!-- Easter egg offered after seven taps on the version in the About dialog -->
