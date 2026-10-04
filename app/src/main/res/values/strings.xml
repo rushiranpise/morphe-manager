@@ -1253,6 +1253,29 @@ Details: %2$s"</string>
     <string name="credits_current_development">Current development</string>
     <string name="credits_prior_development">Prior development</string>
     <string name="opensource_licenses">Open-source licenses</string>
+    <string name="settings_contributors">Contributors</string>
+    <string name="settings_contributors_hint">Drag to explore · Pinch to zoom · Tap for details</string>
+    <plurals name="contributor_commits">
+        <item quantity="one">%1$d commit</item>
+        <item quantity="other">%1$d commits</item>
+    </plurals>
+    <string name="contributor_view_github">View on GitHub</string>
+    <string name="contributor_details_close">Close</string>
+    <!-- Which part of the project a contributor's commits touched, shown as a badge. -->
+    <string name="contributor_area_app">App</string>
+    <string name="contributor_area_server">Server</string>
+    <string name="contributor_area_adb">ADB</string>
+    <string name="contributor_area_build">Build</string>
+    <string name="contributor_area_i18n">Translations</string>
+    <string name="contributor_area_docs">Docs</string>
+    <!--
+      A contributor's summary is composed from what the credits generator found - the areas they
+      worked on and the languages they translated - so no wording is written per person.
+    -->
+    <string name="contributor_summary_code">Worked on %1$s.</string>
+    <string name="contributor_summary_translations">Translated the app into %1$s.</string>
+    <string name="contributor_summary_code_translations">Worked on %1$s, and translated the app into %2$s.</string>
+    <string name="contributor_summary_default">Contributor</string>
 
     <!-- Easter egg offered after seven taps on the version in the About dialog -->
     <string name="easter_egg_pill_title">A choice</string>

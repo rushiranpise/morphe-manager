@@ -107,6 +107,9 @@ dependencies {
 
     // Unit tests
     testImplementation(libs.kotlin.test.junit)
+    // The credits snapshot is JSON, and org.json inside android.jar is a stub that throws in a
+    // unit test. This is the real thing, test-only, so the snapshot can be parsed where it lies.
+    testImplementation("org.json:json:20231013")
 }
 
 /**

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import app.morphe.manager.R
+import app.morphe.manager.ui.screen.settings.system.contributors.ContributorWallSection
 import app.morphe.manager.ui.screen.shared.*
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Brands
@@ -96,6 +97,9 @@ fun CreditsDialog(onDismiss: () -> Unit) {
                     title = stringResource(R.string.opensource_licenses)
                 )
             }
+
+            // Everyone who committed here, drawn from the repository's own history
+            ContributorWallSection()
         }
     }
 }
